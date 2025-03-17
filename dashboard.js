@@ -5,6 +5,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+// List of URLs to scrape
 const urls = [
     'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3116?share=a6292ae96823dd5dfba565e53e18638e19169246',
     'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/392?share=fe8bdb9af9f3c2793634840ec333f43a051afa64',
@@ -43,6 +44,7 @@ const urls = [
     'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2394?share=fc31fd87041dd3359ef4015eba0d4a9f4b447726'
 ];
 
+// Function to fetch HTML data from a URL
 async function fetchData(url) {
     try {
         const { data } = await axios.get(url);
@@ -53,6 +55,7 @@ async function fetchData(url) {
     }
 }
 
+// Function to parse the table data from HTML
 function parseTable(html, url) {
     const $ = cheerio.load(html);
     const table = $('#workspaceSummary'); // Adjust the selector to target the specific table if needed
@@ -78,6 +81,7 @@ function parseTable(html, url) {
     return result;
 }
 
+// Function to generate the HTML table from the parsed data
 function generateHTMLTable(data) {
     let html = '<table border="1" style="width: 100%; border-collapse: collapse;">\n';
 
@@ -93,6 +97,7 @@ function generateHTMLTable(data) {
     return html;
 }
 
+// Server route to display the data as an HTML table
 app.get('/', async (req, res) => {
     const allData = [];
 
@@ -100,6 +105,7 @@ app.get('/', async (req, res) => {
     const headers = ['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status'];
     allData.push(headers);
 
+    // Fetch and parse data from each URL
     for (const url of urls) {
         const html = await fetchData(url);
 
@@ -111,11 +117,16 @@ app.get('/', async (req, res) => {
         }
     }
 
+    // Generate the final HTML table and wrap it in a styled HTML document
     const tableHTML = generateHTMLTable(allData);
     const fullHTML = `
         <html>
         <head>
             <style>
+            body
+            {font-family: Arial, sans-serif;}
+            
+            }
                 table {
                     width: 100%;
                     border-collapse: collapse;
@@ -144,6 +155,7 @@ app.get('/', async (req, res) => {
     res.send(fullHTML);
 });
 
+// Start the Express server
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
