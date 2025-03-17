@@ -1,6 +1,7 @@
 // app.js
-const path = require('path');
-const dashboard = require('./dashboard'); // Import the dashboard.js
+const startServer = require('./dashboard');  // Import the server start function
 
-// The dashboard.js will automatically run and start the Express server.
+// Start the server
+startServer();  // This will run the server from the dashboard.js file
+
 console.log('Dashboard is running...');
