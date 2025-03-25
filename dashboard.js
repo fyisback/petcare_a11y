@@ -1,10 +1,10 @@
-// dashboard.js
 const axios = require('axios');
 const cheerio = require('cheerio');
 const express = require('express');
+const pLimit = require('p-limit').default; // Correct import for p-limit
 
 const app = express();
-const port = process.env.PORT || 10000;  // Set default port for Render or Docker
+const port = process.env.PORT || 10000; // Set default port for Render or Docker
 
 // List of URLs to scrape
 const urls = [
@@ -45,22 +45,30 @@ const urls = [
     'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2394?share=fc31fd87041dd3359ef4015eba0d4a9f4b447726'
 ];
 
+// Initialize the p-limit with concurrency limit of 5 requests at once
+const limit = pLimit(5);
 
-// Function to fetch HTML data from a URL
-async function fetchData(url) {
+// Retry mechanism and fetching data with error handling
+async function fetchData(url, retries = 3) {
     try {
         const { data } = await axios.get(url);
         return data;
     } catch (error) {
-        console.error(`Error fetching data from ${url}: ${error}`);
-        return null;
+        if (error.response && error.response.status === 404 && retries > 0) {
+            console.error(`404 Error fetching data from ${url}. Retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds before retry
+            return fetchData(url, retries - 1); // Retry if not yet reached max retries
+        } else {
+            console.error(`Error fetching data from ${url}: ${error.message}`);
+            return null;
+        }
     }
 }
 
-// Function to parse the table data from HTML
+// Parse table data from HTML
 function parseTable(html, url) {
     const $ = cheerio.load(html);
-    const table = $('#workspaceSummary'); // Adjust the selector to target the specific table if needed
+    const table = $('#workspaceSummary'); // Adjust the selector to target the specific table
     const rows = table.find('tbody tr');
     const result = [];
 
@@ -69,7 +77,7 @@ function parseTable(html, url) {
         const secondRow = $(rows[0]).find('th, td').slice(0, 8).map((i, el) => $(el).text().trim()).get();
 
         // Add 1 additional column with data from a different selector
-        const additionalData1 = $('#scanCompleteDate').text().trim(); // Replace '#scanCompleteDate' with the actual ID selector
+        const additionalData1 = $('#scanCompleteDate').text().trim(); // Replace with actual selector
 
         secondRow.push(additionalData1);
         secondRow[0] = `<a href="${url}">${secondRow[0]}</a>`; // Add link to the first column
@@ -83,14 +91,14 @@ function parseTable(html, url) {
     return result;
 }
 
-// Function to generate the HTML table from the parsed data
+// Generate the HTML table from the parsed data
 function generateHTMLTable(data) {
     let html = '<table border="1" style="width: 100%; border-collapse: collapse;">\n';
 
     data.forEach(row => {
         html += '  <tr>\n';
         row.forEach(cell => {
-            html += `    <td style="border: 1px solid #ddd; padding: 8px;">${cell}</td>\n`;
+            html += `<td>${cell}</td>\n`;
         });
         html += '  </tr>\n';
     });
@@ -107,41 +115,60 @@ app.get('/', async (req, res) => {
     const headers = ['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status'];
     allData.push(headers);
 
-    // Fetch and parse data from each URL
-    for (const url of urls) {
-        const html = await fetchData(url);
-
+    // Fetch and parse data from each URL concurrently, using p-limit to limit concurrency to 5
+    const fetchPromises = urls.map(url => limit(() => fetchData(url).then(html => {
         if (html) {
-            const parsedData = parseTable(html, url);
-            allData.push(...parsedData);
+            return parseTable(html, url);
         } else {
             console.error(`Failed to fetch data from ${url}`);
+            return [];
         }
-    }
+    })));
+
+    // Wait for all fetch promises to resolve
+    const results = await Promise.all(fetchPromises);
+    results.forEach(parsedData => {
+        allData.push(...parsedData);
+    });
 
     // Generate the final HTML table and wrap it in a styled HTML document
     const tableHTML = generateHTMLTable(allData);
     const fullHTML = `
         <html>
         <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
             <style>
-                body {
-                    font-family: Arial, sans-serif;
+                h1{ font-weight: lighter; }
+                body{
+                    font-family: "Inter", sans-serif;
+                    font-weight: lighter;
+                    margin:1;
+                }
+                .header {
+                    background-color: #E91B23;
+                    color: white;
+                    text-align: center;
+                    padding: 10px;
+                    margin-bottom: 0px;
+                    border: 1px solid black;
+                    border-bottom: none;
+                    box-shadow: 0px 0px 10px white;
                 }
                 table {
+                    border: 1px solid black;
                     width: 100%;
                     border-collapse: collapse;
+                    margin-top: 0px;
+                    border-top: none;
+                }
+                a {
+                    color: black;
                 }
                 th, td {
-                    border: 1px solid #ddd;
+                    border: 1px solid black;
                     padding: 8px;
-                }
-                th {
-                    background-color: #f2f2f2;
-                    text-align: left;
-                }
-                tr:nth-child(even) {
-                    background-color: #f9f9f9;
                 }
                 tr:hover {
                     background-color: #ddd;
@@ -149,6 +176,9 @@ app.get('/', async (req, res) => {
             </style>
         </head>
         <body>
+        <div class="header">
+            <h1>PetCare NA Dashboard</h1>
+        </div>
             ${tableHTML}
         </body>
         </html>
@@ -163,4 +193,4 @@ function startServer() {
     });
 }
 
-module.exports = startServer;  // Export the function to start the server
+module.exports = startServer; // Export the function to start the server
