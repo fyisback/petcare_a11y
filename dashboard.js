@@ -219,18 +219,22 @@ function generateCategoryAverageTable(data) {
     return html;
 }
 
-// Server route to display the data as an HTML table
-app.get('/', async (req, res) => {
+// Cache for storing fetched data and timestamp
+let cachedData = null;
+let lastFetchTime = null;
+
+// Cache refresh interval in milliseconds (e.g., 10 minutes)
+const CACHE_REFRESH_INTERVAL = 10 * 60 * 1000;
+
+// Function to fetch and cache data
+async function fetchAndCacheData() {
     console.log(`[${new Date().toISOString()}] Starting data fetching process...`);
     const fetchStartTime = Date.now();
 
     const allData = [];
-
-    // Add table headers
     const headers = ['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status'];
     allData.push(headers);
 
-    // Fetch and parse data from each URL concurrently, using p-limit to limit concurrency to 5
     const fetchPromises = urls.map(url => limit(() => fetchData(url[0]).then(html => {
         if (html) {
             return parseTable(html, url[0]);
@@ -240,7 +244,6 @@ app.get('/', async (req, res) => {
         }
     })));
 
-    // Wait for all fetch promises to resolve
     const results = await Promise.all(fetchPromises);
     results.forEach(parsedData => {
         allData.push(...parsedData);
@@ -249,10 +252,62 @@ app.get('/', async (req, res) => {
     const fetchEndTime = Date.now();
     console.log(`[${new Date().toISOString()}] Finished data fetching process in ${fetchEndTime - fetchStartTime}ms.`);
 
+    // Update cache
+    cachedData = allData;
+    lastFetchTime = Date.now();
+    console.log(`[${new Date().toISOString()}] Data cached successfully.`);
+}
+
+// Periodically refresh the cache in the background
+setInterval(() => {
+    fetchAndCacheData().catch(err => console.error(`[${new Date().toISOString()}] Error refreshing cache: ${err.message}`));
+}, CACHE_REFRESH_INTERVAL);
+
+// Server route to display the data as an HTML table
+app.get('/', async (req, res) => {
+    console.log(`[${new Date().toISOString()}] Fetching fresh data for the page request...`);
+    const fetchStartTime = Date.now();
+
+    let allData = [];
+    try {
+        const headers = ['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status'];
+        allData.push(headers);
+
+        const fetchPromises = urls.map(url => limit(() => fetchData(url[0]).then(html => {
+            if (html) {
+                return parseTable(html, url[0]);
+            } else {
+                console.error(`[${new Date().toISOString()}] Failed to fetch data from ${url[0]}`);
+                return [];
+            }
+        })));
+
+        const results = await Promise.all(fetchPromises);
+        results.forEach(parsedData => {
+            allData.push(...parsedData);
+        });
+
+        console.log(`[${new Date().toISOString()}] Successfully fetched fresh data.`);
+        cachedData = allData; // Update the cache with fresh data
+        lastFetchTime = Date.now();
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error fetching fresh data: ${error.message}`);
+        if (cachedData) {
+            console.log(`[${new Date().toISOString()}] Falling back to cached data.`);
+            allData = cachedData;
+        } else {
+            console.error(`[${new Date().toISOString()}] No cached data available. Sending error response.`);
+            res.status(500).send('Error fetching data and no cached data available.');
+            return;
+        }
+    }
+
+    const fetchEndTime = Date.now();
+    console.log(`[${new Date().toISOString()}] Finished data fetching process in ${fetchEndTime - fetchStartTime}ms.`);
+
     console.log(`[${new Date().toISOString()}] Generating HTML tables...`);
     const tableStartTime = Date.now();
 
-    // Generate the final HTML tables
     const tableHTML = generateHTMLTable(allData);
     const categoryAverageTableHTML = generateCategoryAverageTable(allData.slice(1)); // Exclude headers for category averages
 
@@ -262,6 +317,9 @@ app.get('/', async (req, res) => {
     const fullHTML = `
         <html>
         <head>
+        <title>PetCare NA Dashboard</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
@@ -313,6 +371,9 @@ app.get('/', async (req, res) => {
     res.send(fullHTML);
     console.log(`[${new Date().toISOString()}] Response sent to client.`);
 });
+
+// Fetch initial data on server startup
+fetchAndCacheData().catch(err => console.error(`[${new Date().toISOString()}] Error during initial data fetch: ${err.message}`));
 
 // Start the Express server
 function startServer() {
