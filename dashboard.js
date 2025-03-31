@@ -48,7 +48,7 @@ async function fetchData(url, retries = 3) {
     } catch (error) {
         if (error.response && error.response.status === 404 && retries > 0) {
             console.error(`404 Error fetching data from ${url}. Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds before retry
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 2 seconds before retry
             return fetchData(url, retries - 1); // Retry if not yet reached max retries
         } else {
             console.error(`Error fetching data from ${url}: ${error.message}`);
@@ -126,8 +126,8 @@ function generateHTMLTable(data) {
             : `<a href="${reportLink}" target="_blank"><button style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">Report</button></a>`;
         html += `<td>${reportButton}</td>\n`;
 
-        // Add the category column
-        const category = urls[rowIndex][2];
+        // Add the category column from `urls`
+        const category = urls[rowIndex]?.[2];
         html += `<td>${category}</td>\n`;
 
         html += '  </tr>\n';
@@ -137,48 +137,62 @@ function generateHTMLTable(data) {
     return html;
 }
 
-// Function to calculate the average score for each category
+// Extract categories dynamically from the third column of the `urls` matrix
+const categories = [...new Set(urls.map(url => url[2]))]; // Create a unique list of categories
+
+console.log('Extracted Categories:', categories);
+
+// Function to calculate the average score for each category and total average
 function calculateCategoryAverages(data) {
-    const categoryScores = {};
+    const categoryScores = categories.reduce((acc, category) => {
+        acc[category] = { sum: 0, count: 0 };
+        return acc;
+    }, {});
+
     let totalSum = 0;
     let totalCount = 0;
 
-    // Iterate through the rows of the first table (excluding headers)
+    // Iterate through all rows, starting from index 1 (skip header row)
     data.slice(1).forEach((row, rowIndex) => {
-        const score = parseFloat(row[1]);
-        const category = urls[rowIndex][2];
+        const rawScore = row[1]; // Extract score from the second column
+        const score = parseFloat(rawScore?.replace('%', '')) || 0; // Ensure 0 is counted
+        const category = urls[rowIndex]?.[2]; // Use the third column of the `urls` variable for category mapping
 
-        if (!isNaN(score)) {
-            if (!categoryScores[category]) {
-                categoryScores[category] = { sum: 0, count: 0 };
-            }
-            categoryScores[category].sum += score;
-            categoryScores[category].count += 1;
+        console.log(`Row ${rowIndex + 1}: Score = "${rawScore}", Parsed Score = ${score}, Category = "${category}"`);
 
-            // Update total sum and count
-            totalSum += score;
-            totalCount += 1;
+        if (!categories.includes(category)) {
+            console.log(`Skipping row ${rowIndex + 1} due to invalid category.`);
+            return;
         }
+
+        // Update category-specific scores
+        categoryScores[category].sum += score;
+        categoryScores[category].count += 1;
+
+        // Update total scores
+        totalSum += score;
+        totalCount += 1;
+
+        // Log the updated category scores
+        console.log(`Category "${category}": Added ${score} to sum (${categoryScores[category].sum}), Count = ${categoryScores[category].count}`);
     });
 
-    // Calculate averages for each category
+    // Compute category averages
     const averages = Object.entries(categoryScores).map(([category, { sum, count }]) => ({
         category,
-        average: (sum / count).toFixed(2),
+        average: count > 0 ? (sum / count).toFixed(2) : 'N/A',
     }));
 
-    // Add the total average as the first item
-    if (totalCount > 0) {
-        averages.unshift({
-            category: 'Total',
-            average: (totalSum / totalCount).toFixed(2),
-        });
-    }
+    // Add total average to the averages list
+    averages.unshift({
+        category: 'Total',
+        average: totalCount > 0 ? (totalSum / totalCount).toFixed(2) : 'N/A',
+    });
 
     return averages;
 }
 
-// Function to generate the table with category averages (including total as the first item)
+// Function to generate the table with category averages and total average
 function generateCategoryAverageTable(data) {
     const averages = calculateCategoryAverages(data);
 
@@ -188,7 +202,7 @@ function generateCategoryAverageTable(data) {
     averages.forEach(({ category, average }) => {
         let cellStyle = '';
 
-        if (!isNaN(average)) {
+        if (!isNaN(parseFloat(average))) {
             if (average < 80) {
                 cellStyle = 'background-color: red; color: white;';
             } else if (average >= 80 && average < 90) {
@@ -229,10 +243,13 @@ app.get('/', async (req, res) => {
         allData.push(...parsedData);
     });
 
-    // Generate the final HTML tables
+    // Generate the first HTML table with categories column
     const tableHTML = generateHTMLTable(allData);
-    const categoryAverageTableHTML = generateCategoryAverageTable(allData.slice(1)); // Exclude headers for category averages
 
+    // Calculate category averages only after the categories column is added
+    const categoryAverageTableHTML = generateCategoryAverageTable(allData); // Use the updated `allData` with added columns
+
+    // Generate the final HTML response
     const fullHTML = `
         <html>
         <head>
@@ -295,3 +312,5 @@ function startServer() {
 }
 
 module.exports = startServer; // Export the function to start the server
+
+
