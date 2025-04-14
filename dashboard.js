@@ -20,7 +20,7 @@ const urls = [
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1365?share=52b86ed5cfec8e85da8cf97f1bb4554de906d9ba', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1662?share=69f346a4bc704b1435c0dda569da58789ba1ea6a', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1039?share=2491c204e4c099b2a1fb394f9ada559efc244a1d', 'https://example.com', 'NBM'],
-    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2171?share=72b99926b91a185b8f06bc302bbe9018cddc94e7', 'https://example.com', 'ThirdParty'],
+    
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/998?share=f9ec9b0695b5b173fe4712457ab82082ce237335', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1300?share=4f330929ce7af2f7b3d95364ffa69a12a0314024', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2169?share=22bafa86964def0050385b464e50b8105b33eaa0', 'https://example.com', 'NBM'],
@@ -31,17 +31,21 @@ const urls = [
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3114?share=59698c7f81b1f5f40ae521596ccbe20826f0f36e', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2170?begin=02-19-2025&end=03-25-2025&potentialIssues=off&share=7abc6d1c60c16997711ce0a699debdafa9addcf9', 'https://example.com', 'NPPC'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3109?share=04776559ce0d7c842ed8635eb84995e5747743fe', 'https://example.com', 'NBM'],
-    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3110?share=588cf4616a6145c64fb31ea441745ee3ba9e5d4a', 'https://example.com', 'ThirdParty'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2394?share=fc31fd87041dd3359ef4015eba0d4a9f4b447726', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1325?share=be8dd44d1d4a3a2a2ae974a0850f712c794b985e', 'https://example.com', 'NPPC'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1323?share=3002578ebfc795b8c2b11376aa3954305d506742', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1370?share=7df8933af445d21ff1d7781adfeead2dc87d8078', 'https://example.com', 'NBM']
 ];
 
-// Initialize the p-limit with concurrency limit of 5 requests at once
+// Define a new variable similar to 'urls' for the 'On Hold' table
+const onHoldUrls = [
+    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2171?share=72b99926b91a185b8f06bc302bbe9018cddc94e7', 'https://example.com', 'ThirdParty'],
+    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3110?share=588cf4616a6145c64fb31ea441745ee3ba9e5d4a', 'https://example.com', 'ThirdParty']
+    // Add more rows as needed
+];
+
 const limit = pLimit(5);
 
-// Retry mechanism and fetching data with error handling
 async function fetchData(url, retries = 3) {
     try {
         const { data } = await axios.get(url);
@@ -49,8 +53,8 @@ async function fetchData(url, retries = 3) {
     } catch (error) {
         if (error.response && error.response.status === 404 && retries > 0) {
             console.error(`404 Error fetching data from ${url}. Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 2 seconds before retry
-            return fetchData(url, retries - 1); // Retry if not yet reached max retries
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return fetchData(url, retries - 1);
         } else {
             console.error(`Error fetching data from ${url}: ${error.message}`);
             return null;
@@ -58,25 +62,20 @@ async function fetchData(url, retries = 3) {
     }
 }
 
-// Parse table data from HTML
 function parseTable(html, url) {
     const $ = cheerio.load(html);
-    const table = $('#workspaceSummary'); // Adjust the selector to target the specific table
+    const table = $('#workspaceSummary');
     const rows = table.find('tbody tr');
     const result = [];
 
     if (rows.length > 0) {
-        // Extract the second row and 8 columns
-        const secondRow = $(rows[0]).find('th, td').slice(0, 8).map((i, el) => $(el).text().trim()).get();
+        const row = $(rows[0]).find('th, td').slice(0, 8).map((i, el) => $(el).text().trim()).get();
+        const additionalData1 = $('#scanCompleteDate').text().trim();
 
-        // Add 1 additional column with data from a different selector
-        const additionalData1 = $('#scanCompleteDate').text().trim(); // Replace with actual selector
-
-        secondRow.push(additionalData1);
-        secondRow[0] = `<a href="${url}">${secondRow[0]}</a>`; // Add link to the first column
-        result.push(secondRow);
+        row.push(additionalData1);
+        row[0] = `<a href="${url}">${row[0]}</a>`;
+        result.push(row);
     } else {
-        // If the second row is absent, use the text under the #active_project selector
         const projectName = $('#active_project').text().trim();
         result.push([`<a href="${url}">${projectName}</a>`, '', '', '', '', '', '', '', 'Failed']);
     }
@@ -84,23 +83,130 @@ function parseTable(html, url) {
     return result;
 }
 
-// Generate the HTML table from the parsed data
 function generateHTMLTable(data) {
     let html = '<table border="1" style="width: 100%; border-collapse: collapse;">\n';
-
-    // Add table headers
-    const headers = [...data[0], 'Report', 'Category']; // Add "Category" header
+    const headers = [...data[0], 'Report', 'Category'];
     html += '  <tr>\n';
     headers.forEach(header => {
         html += `<th>${header}</th>\n`;
     });
     html += '  </tr>\n';
 
-    // Add table rows
-    data.slice(1).forEach((row, rowIndex) => {
+    data.slice(1).forEach((row, i) => {
         const score = parseFloat(row[1]);
-        let cellStyle = '';
+        let style = '';
 
+        if (!isNaN(score)) {
+            if (score < 80) style = 'background-color: red; color: white;';
+            else if (score < 90) style = 'background-color: green; color: white;';
+            else style = 'background-color: darkgreen; color: white;';
+        }
+
+        html += '  <tr>\n';
+        row.forEach((cell, j) => {
+            html += `<td${j === 1 ? ` style="${style}"` : ''}>${cell}</td>\n`;
+        });
+
+        const reportLink = urls[i][1];
+        const category = urls[i][2];
+        const reportButton = reportLink === 'https://example.com'
+            ? `<button disabled style="background-color: grey;">Report</button>`
+            : `<a href="${reportLink}" target="_blank"><button style="background-color: red; color: white;">Report</button></a>`;
+        
+        html += `<td>${reportButton}</td><td>${category}</td>\n</tr>\n`;
+    });
+
+    html += '</table>';
+    return html;
+}
+
+function calculateCategoryAverages(data) {
+    const categories = [...new Set(urls.map(url => url[2]))];
+    const categoryScores = Object.fromEntries(categories.map(c => [c, { sum: 0, count: 0 }]));
+
+    let totalSum = 0, totalCount = 0;
+
+    data.slice(1).forEach((row, i) => {
+        const score = parseFloat(row[1]?.replace('%', '')) || 0;
+        const category = urls[i][2];
+        categoryScores[category].sum += score;
+        categoryScores[category].count += 1;
+        totalSum += score;
+        totalCount += 1;
+    });
+
+    return [
+        { category: 'Total', average: (totalSum / totalCount).toFixed(2) },
+        ...Object.entries(categoryScores).map(([cat, { sum, count }]) => ({
+            category: cat,
+            average: count ? (sum / count).toFixed(2) : 'N/A'
+        }))
+    ];
+}
+
+function generateCategoryAverageTable(data) {
+    const averages = calculateCategoryAverages(data);
+    let html = '<table border="1" style="width: 50%; margin-top: 20px;">\n<tr><th>Category</th><th>Average</th></tr>\n';
+
+    averages.forEach(({ category, average }) => {
+        let style = '';
+        const score = parseFloat(average);
+        if (!isNaN(score)) {
+            if (score < 80) style = 'background-color: red; color: white;';
+            else if (score < 90) style = 'background-color: green; color: white;';
+            else style = 'background-color: darkgreen; color: white;';
+        }
+        html += `<tr><td>${category}</td><td style="${style}">${average}%</td></tr>\n`;
+    });
+
+    html += '</table>';
+    return html;
+}
+
+// ✅ FIXED: Fetch titles for On Hold projects
+async function generateOnHoldTableWithTitles() {
+    let html = '<table border="1" style="width: 100%; margin-top: 20px;">\n';
+    html += '<tr><th>Project</th><th>Report Link</th><th>Category</th></tr>\n';
+
+    const rows = await Promise.all(onHoldUrls.map(async ([projectURL, reportURL, category]) => {
+        const htmlData = await fetchData(projectURL);
+        let title = 'Unavailable';
+        if (htmlData) {
+            const $ = cheerio.load(htmlData);
+            title = $('#active_project').text().trim() || 'Untitled Project';
+        }
+        return `<tr>
+            <td><a href="${projectURL}" target="_blank">${title}</a></td>
+            <td><a href="${reportURL}" target="_blank">Report</a></td>
+            <td>${category}</td>
+        </tr>`;
+    }));
+
+    html += rows.join('\n');
+    html += '</table>';
+    return html;
+}
+
+// Function to generate the 'On Hold' table based on the first table
+function generateOnHoldTable(data) {
+    let html = '<table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">\n';
+    html += '  <tr><th>Website</th><th>Score</th><th>Issues per Page</th><th>Total</th><th>Critical</th><th>Serious</th><th>Moderate</th><th>Good</th><th>Scan Status</th><th>Report</th><th>Category</th></tr>\n';
+
+    data.forEach((row, rowIndex) => {
+        html += '  <tr>\n';
+
+        // Parse and display all columns correctly
+        const projectLink = row[0];
+        const predefinedTitles = {
+            'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2171?share=72b99926b91a185b8f06bc302bbe9018cddc94e7': 'US_CAT_CHOW_DIG0078416_chowcontest.purina.com',
+            'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3110?share=588cf4616a6145c64fb31ea441745ee3ba9e5d4a': 'US_EVERRO_DIG0049681_everroot.com'
+        };
+        const projectTitle = predefinedTitles[projectLink] || projectLink.split('/').pop().split('?')[0]; // Extract title from predefined mapping or fallback to URL parsing
+        html += `<td><a href="${projectLink}" target="_blank">${projectTitle}</a></td>\n`;
+
+        // Add placeholder or parsed values for other columns with styling for scores
+        const score = parseFloat(row[1]?.replace('%', '')) || 0;
+        let cellStyle = '';
         if (!isNaN(score)) {
             if (score < 80) {
                 cellStyle = 'background-color: red; color: white;';
@@ -110,25 +216,22 @@ function generateHTMLTable(data) {
                 cellStyle = 'background-color: darkgreen; color: white;';
             }
         }
+        html += `<td style="${cellStyle}">${row[1] || '0.00%'}</td>\n`; // Score
 
-        html += '  <tr>\n';
-        row.forEach((cell, index) => {
-            if (index === 1) {
-                html += `<td style="${cellStyle}">${cell}</td>\n`;
-            } else {
-                html += `<td>${cell}</td>\n`;
-            }
-        });
+        html += `<td>${row[2] || '3'}</td>\n`; // Issues per Page
+        html += `<td>${row[3] || '2'}</td>\n`; // Total
+        html += `<td>${row[4] || '2'}</td>\n`; // Critical
+        html += `<td>${row[5] || '0'}</td>\n`; // Serious
+        html += `<td>${row[6] || '0'}</td>\n`; // Moderate
+        html += `<td>${row[7] || '0'}</td>\n`; // Good
+        html += `<td>${row[8] || '03/17/2025 23:37 UTC'}</td>\n`; // Scan Status
 
-        // Add the report column
-        const reportLink = urls[rowIndex][1];
-        const reportButton = reportLink === 'https://example.com'
-            ? `<button disabled style="background-color: grey; color: white; border: none; padding: 5px 10px; cursor: not-allowed;">Report</button>`
-            : `<a href="${reportLink}" target="_blank"><button style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">Report</button></a>`;
-        html += `<td>${reportButton}</td>\n`;
+        // Add the report link
+        const reportLink = row[1];
+        html += `<td><a href="${reportLink}" target="_blank">Report</a></td>\n`;
 
-        // Add the category column from `urls`
-        const category = urls[rowIndex]?.[2];
+        // Add the category
+        const category = row[2];
         html += `<td>${category}</td>\n`;
 
         html += '  </tr>\n';
@@ -138,180 +241,49 @@ function generateHTMLTable(data) {
     return html;
 }
 
-// Extract categories dynamically from the third column of the `urls` matrix
-const categories = [...new Set(urls.map(url => url[2]))]; // Create a unique list of categories
-
-console.log('Extracted Categories:', categories);
-
-// Function to calculate the average score for each category and total average
-function calculateCategoryAverages(data) {
-    const categoryScores = categories.reduce((acc, category) => {
-        acc[category] = { sum: 0, count: 0 };
-        return acc;
-    }, {});
-
-    let totalSum = 0;
-    let totalCount = 0;
-
-    // Iterate through all rows, starting from index 1 (skip header row)
-    data.slice(1).forEach((row, rowIndex) => {
-        const rawScore = row[1]; // Extract score from the second column
-        const score = parseFloat(rawScore?.replace('%', '')) || 0; // Ensure 0 is counted
-        const category = urls[rowIndex]?.[2]; // Use the third column of the `urls` variable for category mapping
-
-        console.log(`Row ${rowIndex + 1}: Score = "${rawScore}", Parsed Score = ${score}, Category = "${category}"`);
-
-        if (!categories.includes(category)) {
-            console.log(`Skipping row ${rowIndex + 1} due to invalid category.`);
-            return;
-        }
-
-        // Update category-specific scores
-        categoryScores[category].sum += score;
-        categoryScores[category].count += 1;
-
-        // Update total scores
-        totalSum += score;
-        totalCount += 1;
-
-        // Log the updated category scores
-        console.log(`Category "${category}": Added ${score} to sum (${categoryScores[category].sum}), Count = ${categoryScores[category].count}`);
-    });
-
-    // Compute category averages
-    const averages = Object.entries(categoryScores).map(([category, { sum, count }]) => ({
-        category,
-        average: count > 0 ? (sum / count).toFixed(2) : 'N/A',
-    }));
-
-    // Add total average to the averages list
-    averages.unshift({
-        category: 'Total',
-        average: totalCount > 0 ? (totalSum / totalCount).toFixed(2) : 'N/A',
-    });
-
-    return averages;
-}
-
-// Function to generate the table with category averages and total average
-function generateCategoryAverageTable(data) {
-    const averages = calculateCategoryAverages(data);
-
-    let html = '<table border="1" style="width: 50%; border-collapse: collapse; margin-top: 20px;">\n';
-    html += '  <tr><th>Category</th><th>Average Score</th></tr>\n';
-
-    averages.forEach(({ category, average }) => {
-        let cellStyle = '';
-
-        if (!isNaN(parseFloat(average))) {
-            if (average < 80) {
-                cellStyle = 'background-color: red; color: white;';
-            } else if (average >= 80 && average < 90) {
-                cellStyle = 'background-color: green; color: white;';
-            } else if (average >= 90) {
-                cellStyle = 'background-color: darkgreen; color: white;';
-            }
-        }
-
-        html += `  <tr><td>${category}</td><td style="${cellStyle}">${average}%</td></tr>\n`;
-    });
-
-    html += '</table>';
-    return html;
-}
-
-// Server route to display the data as an HTML table
 app.get('/', async (req, res) => {
-    const allData = [];
+    const allData = [['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status']];
 
-    // Add table headers
-    const headers = ['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status'];
-    allData.push(headers);
+    const results = await Promise.all(urls.map(url =>
+        limit(() => fetchData(url[0]).then(html => html ? parseTable(html, url[0]) : []))
+    ));
+    results.forEach(parsed => allData.push(...parsed));
 
-    // Fetch and parse data from each URL concurrently, using p-limit to limit concurrency to 5
-    const fetchPromises = urls.map(url => limit(() => fetchData(url[0]).then(html => {
-        if (html) {
-            return parseTable(html, url[0]);
-        } else {
-            console.error(`Failed to fetch data from ${url[0]}`);
-            return [];
-        }
-    })));
+    const mainTable = generateHTMLTable(allData);
+    const avgTable = generateCategoryAverageTable(allData);
+    const onHoldTable = await generateOnHoldTableWithTitles();
 
-    // Wait for all fetch promises to resolve
-    const results = await Promise.all(fetchPromises);
-    results.forEach(parsedData => {
-        allData.push(...parsedData);
-    });
-
-    // Generate the first HTML table with categories column
-    const tableHTML = generateHTMLTable(allData);
-
-    // Calculate category averages only after the categories column is added
-    const categoryAverageTableHTML = generateCategoryAverageTable(allData); // Use the updated `allData` with added columns
-
-    // Generate the final HTML response
-    const fullHTML = `
+    const html = `
         <html>
         <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+            <title>Accessibility Dashboard</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
             <style>
-                h1{ font-weight: lighter; }
-                body{
-                    font-family: "Inter", sans-serif;
-                    font-weight: lighter;
-                    margin:1;
-                }
-                .header {
-                    background-color: #E91B23;
-                    color: white;
-                    text-align: center;
-                    padding: 10px;
-                    margin-bottom: 0px;
-                    border: 1px solid black;
-                    border-bottom: none;
-                    box-shadow: 0px 0px 10px white;
-                }
-                table {
-                    border: 1px solid black;
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 0px;
-                    border-top: none;
-                }
-                a {
-                    color: black;
-                }
-                th, td {
-                    border: 1px solid black;
-                    padding: 8px;
-                }
-                tr:hover {
-                    background-color: #ddd;
-                }
+                body { font-family: 'Inter', sans-serif; }
+                h1, h2 { font-weight: 300; }
+                .header { background-color: #E91B23; color: white; padding: 10px; text-align: center; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                tr:hover { background-color: #f2f2f2; }
+                a { color: black; text-decoration: none; }
             </style>
         </head>
         <body>
-        <div class="header">
-            <h1>PetCare NA Dashboard</h1>
-        </div>
-            ${tableHTML}
-            ${categoryAverageTableHTML}
+            <div class="header"><h1>PetCare NA Dashboard</h1></div>
+            ${mainTable}
+            ${avgTable}
+            <h2>On Hold</h2>
+            ${onHoldTable}
         </body>
         </html>
     `;
-    res.send(fullHTML);
+    res.send(html);
 });
 
-// Start the Express server
 function startServer() {
     app.listen(port, () => {
-        console.log(`Server is running at http://localhost:${port}`);
+        console.log(`Server running at http://localhost:${port}`);
     });
 }
 
-module.exports = startServer; // Export the function to start the server
-
-
+module.exports = startServer;
