@@ -4,7 +4,7 @@ const express = require('express');
 const pLimit = require('p-limit').default; // Correct import for p-limit
 
 const app = express();
-const port = process.env.PORT || 10000; // Set default port for Render or Docker
+const port = process.env.PORT || 10000; // Allow custom port via environment variable
 
 // List of URLs to scrape
 const urls = [
@@ -46,20 +46,18 @@ const onHoldUrls = [
 
 const limit = pLimit(5);
 
-async function fetchData(url, retries = 3) {
-    try {
-        const { data } = await axios.get(url);
-        return data;
-    } catch (error) {
-        if (error.response && error.response.status === 404 && retries > 0) {
-            console.error(`404 Error fetching data from ${url}. Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return fetchData(url, retries - 1);
+function fetchData(url, retries = 3) {
+    return axios.get(url).then(res => res.data).catch(err => {
+        if (err.response && err.response.status === 404 && retries > 0) {
+            console.error(`404 Error fetching ${url}. Retrying...`);
+            return new Promise(resolve => setTimeout(resolve, 500)).then(() =>
+                fetchData(url, retries - 1)
+            );
         } else {
-            console.error(`Error fetching data from ${url}: ${error.message}`);
+            console.error(`Error fetching ${url}: ${err.message}`);
             return null;
         }
-    }
+    });
 }
 
 function parseTable(html, url) {
@@ -86,11 +84,7 @@ function parseTable(html, url) {
 function generateHTMLTable(data) {
     let html = '<table border="1" style="width: 100%; border-collapse: collapse;">\n';
     const headers = [...data[0], 'Report', 'Category'];
-    html += '  <tr>\n';
-    headers.forEach(header => {
-        html += `<th>${header}</th>\n`;
-    });
-    html += '  </tr>\n';
+    html += '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>\n';
 
     data.slice(1).forEach((row, i) => {
         const score = parseFloat(row[1]);
@@ -102,18 +96,17 @@ function generateHTMLTable(data) {
             else style = 'background-color: darkgreen; color: white;';
         }
 
-        html += '  <tr>\n';
-        row.forEach((cell, j) => {
-            html += `<td${j === 1 ? ` style="${style}"` : ''}>${cell}</td>\n`;
-        });
+        html += '<tr>' + row.map((cell, j) =>
+            `<td${j === 1 ? ` style="${style}"` : ''}>${cell}</td>`
+        ).join('');
 
         const reportLink = urls[i][1];
         const category = urls[i][2];
         const reportButton = reportLink === 'https://example.com'
             ? `<button disabled style="background-color: grey;">Report</button>`
             : `<a href="${reportLink}" target="_blank"><button style="background-color: red; color: white;">Report</button></a>`;
-        
-        html += `<td>${reportButton}</td><td>${category}</td>\n</tr>\n`;
+
+        html += `<td>${reportButton}</td><td>${category}</td></tr>\n`;
     });
 
     html += '</table>';
@@ -163,126 +156,83 @@ function generateCategoryAverageTable(data) {
     return html;
 }
 
-// ✅ FIXED: Fetch titles for On Hold projects
-async function generateOnHoldTableWithTitles() {
-    let html = '<table border="1" style="width: 100%; margin-top: 20px;">\n';
-    html += '<tr><th>Project</th><th>Report Link</th><th>Category</th></tr>\n';
+// ✅ No async: Fetch On Hold titles using Promises
+function generateOnHoldTableWithTitlesNoAsync(callback) {
+    const rows = [];
 
-    const rows = await Promise.all(onHoldUrls.map(async ([projectURL, reportURL, category]) => {
-        const htmlData = await fetchData(projectURL);
-        let title = 'Unavailable';
-        if (htmlData) {
-            const $ = cheerio.load(htmlData);
-            title = $('#active_project').text().trim() || 'Untitled Project';
-        }
-        return `<tr>
-            <td><a href="${projectURL}" target="_blank">${title}</a></td>
-            <td><a href="${reportURL}" target="_blank">Report</a></td>
-            <td>${category}</td>
-        </tr>`;
-    }));
-
-    html += rows.join('\n');
-    html += '</table>';
-    return html;
-}
-
-// Function to generate the 'On Hold' table based on the first table
-function generateOnHoldTable(data) {
-    let html = '<table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">\n';
-    html += '  <tr><th>Website</th><th>Score</th><th>Issues per Page</th><th>Total</th><th>Critical</th><th>Serious</th><th>Moderate</th><th>Good</th><th>Scan Status</th><th>Report</th><th>Category</th></tr>\n';
-
-    data.forEach((row, rowIndex) => {
-        html += '  <tr>\n';
-
-        // Parse and display all columns correctly
-        const projectLink = row[0];
-        const predefinedTitles = {
-            'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2171?share=72b99926b91a185b8f06bc302bbe9018cddc94e7': 'US_CAT_CHOW_DIG0078416_chowcontest.purina.com',
-            'https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3110?share=588cf4616a6145c64fb31ea441745ee3ba9e5d4a': 'US_EVERRO_DIG0049681_everroot.com'
-        };
-        const projectTitle = predefinedTitles[projectLink] || projectLink.split('/').pop().split('?')[0]; // Extract title from predefined mapping or fallback to URL parsing
-        html += `<td><a href="${projectLink}" target="_blank">${projectTitle}</a></td>\n`;
-
-        // Add placeholder or parsed values for other columns with styling for scores
-        const score = parseFloat(row[1]?.replace('%', '')) || 0;
-        let cellStyle = '';
-        if (!isNaN(score)) {
-            if (score < 80) {
-                cellStyle = 'background-color: red; color: white;';
-            } else if (score >= 80 && score < 90) {
-                cellStyle = 'background-color: green; color: white;';
-            } else if (score >= 90) {
-                cellStyle = 'background-color: darkgreen; color: white;';
+    let completed = 0;
+    onHoldUrls.forEach(([projectURL, reportURL, category], i) => {
+        fetchData(projectURL).then(html => {
+            let title = 'Unavailable';
+            if (html) {
+                const $ = cheerio.load(html);
+                title = $('#active_project').text().trim() || 'Untitled Project';
             }
-        }
-        html += `<td style="${cellStyle}">${row[1] || '0.00%'}</td>\n`; // Score
 
-        html += `<td>${row[2] || '3'}</td>\n`; // Issues per Page
-        html += `<td>${row[3] || '2'}</td>\n`; // Total
-        html += `<td>${row[4] || '2'}</td>\n`; // Critical
-        html += `<td>${row[5] || '0'}</td>\n`; // Serious
-        html += `<td>${row[6] || '0'}</td>\n`; // Moderate
-        html += `<td>${row[7] || '0'}</td>\n`; // Good
-        html += `<td>${row[8] || '03/17/2025 23:37 UTC'}</td>\n`; // Scan Status
-
-        // Add the report link
-        const reportLink = row[1];
-        html += `<td><a href="${reportLink}" target="_blank">Report</a></td>\n`;
-
-        // Add the category
-        const category = row[2];
-        html += `<td>${category}</td>\n`;
-
-        html += '  </tr>\n';
+            const rowHTML = `<tr>
+                <td><a href="${projectURL}" target="_blank">${title}</a></td>
+                <td><a href="${reportURL}" target="_blank">Report</a></td>
+                <td>${category}</td>
+            </tr>`;
+            rows[i] = rowHTML;
+        }).catch(() => {
+            rows[i] = `<tr><td><a href="${projectURL}">Unavailable</a></td><td><a href="${reportURL}">Report</a></td><td>${category}</td></tr>`;
+        }).finally(() => {
+            completed++;
+            if (completed === onHoldUrls.length) {
+                const html = `<table border="1" style="width: 100%; margin-top: 20px;">
+<tr><th>Project</th><th>Report Link</th><th>Category</th></tr>
+${rows.join('\n')}
+</table>`;
+                callback(html);
+            }
+        });
     });
-
-    html += '</table>';
-    return html;
 }
 
-app.get('/', async (req, res) => {
+app.get('/', (req, res) => {
     const allData = [['Website', 'Score', 'Issues per Page', 'Total', 'Critical', 'Serious', 'Moderate', 'Good', 'Scan status']];
 
-    const results = await Promise.all(urls.map(url =>
+    Promise.all(urls.map(url =>
         limit(() => fetchData(url[0]).then(html => html ? parseTable(html, url[0]) : []))
-    ));
-    results.forEach(parsed => allData.push(...parsed));
+    )).then(results => {
+        results.forEach(parsed => allData.push(...parsed));
+        const mainTable = generateHTMLTable(allData);
+        const avgTable = generateCategoryAverageTable(allData);
 
-    const mainTable = generateHTMLTable(allData);
-    const avgTable = generateCategoryAverageTable(allData);
-    const onHoldTable = await generateOnHoldTableWithTitles();
-
-    const html = `
-        <html>
-        <head>
-            <title>Accessibility Dashboard</title>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
-            <style>
-                body { font-family: 'Inter', sans-serif; }
-                h1, h2 { font-weight: 300; }
-                .header { background-color: #E91B23; color: white; padding: 10px; text-align: center; }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-                tr:hover { background-color: #f2f2f2; }
-                a { color: black; text-decoration: none; }
-            </style>
-        </head>
-        <body>
-            <div class="header"><h1>PetCare NA Dashboard</h1></div>
-            ${mainTable}
-            ${avgTable}
-            <h2>On Hold</h2>
-            ${onHoldTable}
-        </body>
-        </html>
-    `;
-    res.send(html);
+        generateOnHoldTableWithTitlesNoAsync(onHoldTable => {
+            const html = `
+                <html>
+                <head>
+                    <title>Accessibility Dashboard</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Inter', sans-serif; }
+                        h1, h2 { font-weight: 300; }
+                        .header { background-color: #E91B23; color: white; padding: 10px; text-align: center; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                        tr:hover { background-color: #f2f2f2; }
+                        a { color: black; text-decoration: none; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header"><h1>PetCare NA Dashboard</h1></div>
+                    ${mainTable}
+                    ${avgTable}
+                    <h2>On Hold</h2>
+                    ${onHoldTable}
+                </body>
+                </html>
+            `;
+            res.send(html);
+        });
+    });
 });
 
 function startServer() {
-    app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}`);
+    app.listen(port, '0.0.0.0', () => { // Bind to 0.0.0.0
+        console.log(`Server running at http://0.0.0.0:${port}`);
     });
 }
 
