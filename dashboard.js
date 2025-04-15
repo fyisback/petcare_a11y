@@ -20,7 +20,7 @@ const urls = [
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1365?share=52b86ed5cfec8e85da8cf97f1bb4554de906d9ba', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1662?share=69f346a4bc704b1435c0dda569da58789ba1ea6a', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1039?share=2491c204e4c099b2a1fb394f9ada559efc244a1d', 'https://example.com', 'NBM'],
-    
+    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2171?begin=02-16-2025&end=04-15-2025&potentialIssues=off&share=72b99926b91a185b8f06bc302bbe9018cddc94e7', 'https://example.com', 'ThirdParty'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/998?share=f9ec9b0695b5b173fe4712457ab82082ce237335', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1300?share=4f330929ce7af2f7b3d95364ffa69a12a0314024', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2169?share=22bafa86964def0050385b464e50b8105b33eaa0', 'https://example.com', 'NBM'],
@@ -30,7 +30,7 @@ const urls = [
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2167?share=9bf81ec7f4bab1f2c06fce634d3c6384d92a04c5', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3114?share=59698c7f81b1f5f40ae521596ccbe20826f0f36e', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2170?begin=02-19-2025&end=03-25-2025&potentialIssues=off&share=7abc6d1c60c16997711ce0a699debdafa9addcf9', 'https://example.com', 'NPPC'],
-    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3109?share=04776559ce0d7c842ed8635eb84995e5747743fe', 'https://example.com', 'NBM'],
+
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2394?share=fc31fd87041dd3359ef4015eba0d4a9f4b447726', 'https://example.com', 'NBM'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1325?share=be8dd44d1d4a3a2a2ae974a0850f712c794b985e', 'https://example.com', 'NPPC'],
     ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/1323?share=3002578ebfc795b8c2b11376aa3954305d506742', 'https://example.com', 'NBM'],
@@ -39,8 +39,9 @@ const urls = [
 
 // Define a new variable similar to 'urls' for the 'On Hold' table
 const onHoldUrls = [
-    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/2171?share=72b99926b91a185b8f06bc302bbe9018cddc94e7', 'https://example.com', 'ThirdParty'],
-    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3110?share=588cf4616a6145c64fb31ea441745ee3ba9e5d4a', 'https://example.com', 'ThirdParty']
+   
+    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3110?share=588cf4616a6145c64fb31ea441745ee3ba9e5d4a', 'https://example.com', 'ThirdParty', 'US_PURINA_DIG0072312_treatrewards.purina.com'],
+    ['https://nestle-axemonitor.dequecloud.com/worldspace/organizationProject/summary/3109?share=04776559ce0d7c842ed8635eb84995e5747743fe', 'https://example.com', 'NBM', 'US_PURINA_DIG0065584_welcome.purina.com']
     // Add more rows as needed
 ];
 
