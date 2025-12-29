@@ -1,0 +1,165 @@
+<%- include('partials/header') %>
+
+<h2>Admin Panel</h2>
+
+<% if (locals.message) { %>
+    <p class="message"><%= message %></p>
+<% } %>
+
+<div class="forms-wrapper">
+    <div class="form-container admin-form">
+        <h3>Add New Active Project</h3>
+        <form action="/admin/projects/add" method="POST">
+            <div class="form-group">
+                <input type="text" name="custom_title" placeholder="Custom Title (Optional)">
+            </div>
+            <div class="form-group">
+                <input type="url" name="project_url" placeholder="Project URL" required>
+            </div>
+            <div class="form-group">
+                <input type="url" name="report_url" placeholder="Report URL">
+            </div>
+            <div class="form-group">
+                <input type="email" name="contact_person" placeholder="Contact Person (Email)">
+            </div>
+            <div class="form-group">
+                <input type="url" name="ticketing_portal_url" placeholder="Ticketing Portal URL">
+            </div>
+            <div class="form-group">
+                <select name="category" required>
+                    <option value="" disabled selected>Select Category</option>
+                    <option value="NBM">NBM</option>
+                    <option value="ThirdParty">ThirdParty</option>
+                    <option value="NPPC">NPPC</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary">Add Active Project</button>
+        </form>
+    </div>
+
+    <div class="form-container admin-form">
+        <h3>Add On Hold Project</h3>
+        <form action="/admin/onhold/add" method="POST">
+            <div class="form-group">
+                <input type="text" name="custom_title" placeholder="Custom Title (Optional)">
+            </div>
+            <div class="form-group">
+                <input type="url" name="project_url" placeholder="Project URL" required>
+            </div>
+            <div class="form-group">
+                <input type="url" name="report_url" placeholder="Report URL">
+            </div>
+            <div class="form-group">
+                 <select name="category" required>
+                    <option value="" disabled selected>Select Category</option>
+                    <option value="NBM">NBM</option>
+                    <option value="ThirdParty">ThirdParty</option>
+                    <option value="NPPC">NPPC</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-secondary">Add On Hold Project</button>
+        </form>
+    </div>
+</div>
+
+
+<h3>Active Projects</h3>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Custom Title</th>
+                <th>Project URL</th>
+                <th>Report URL</th>
+                <th>Category</th>
+                <th>Contact Person</th>
+                <th>Ticketing Portal</th> <!-- NEW COLUMN -->
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% projects.forEach(project => { %>
+                <tr>
+                    <td><%= project.id %></td>
+                    <td><%= project.custom_title %></td>
+                    <td><a href="<%= project.project_url %>" target="_blank">Link</a></td>
+                    <td><a href="<%= project.report_url %>" target="_blank">Link</a></td>
+                    <td><%= project.category %></td>
+                    <td><%= project.contact_person || 'N/A' %></td>
+                    <td>
+                        <% if (project.ticketing_portal_url) { %>
+                            <a href="<%= project.ticketing_portal_url %>" target="_blank">Link</a>
+                        <% } else { %>
+                            N/A
+                        <% } %>
+                    </td>
+                    <td>
+                        <a href="/admin/edit/active/<%= project.id %>" class="btn">Edit</a>
+                        <form action="/admin/delete/active/<%= project.id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<h3>On Hold Projects</h3>
+<div class="table-container">
+     <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Custom Title</th>
+                <th>Project URL</th>
+                <th>Report URL</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% onHoldProjects.forEach(project => { %>
+                <tr>
+                    <td><%= project.id %></td>
+                    <td><%= project.custom_title %></td>
+                    <td><a href="<%= project.project_url %>" target="_blank">Link</a></td>
+                    <td><a href="<%= project.report_url %>" target="_blank">Link</a></td>
+                    <td><%= project.category %></td>
+                    <td>
+                        <a href="/admin/edit/onhold/<%= project.id %>" class="btn">Edit</a>
+                        <form action="/admin/delete/onhold/<%= project.id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>
+
+<style>
+    .forms-wrapper {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    .form-container.admin-form {
+        flex: 1;
+        padding: 1.5rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+    .admin-form .form-group {
+        margin-bottom: 1rem;
+    }
+    .admin-form input, .admin-form select {
+        width: 100%;
+        padding: 0.5rem;
+        box-sizing: border-box;
+    }
+</style>
