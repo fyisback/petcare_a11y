@@ -4,11 +4,13 @@ const router = express.Router();
 const db = require('../services/db');
 const parser = require('../services/parser');
 
-// Отримуємо проєкти з останніми збереженими оцінками
+// Функція для отримання даних (читання з БД)
 function getProjectsWithScores() {
+    // Беремо всі активні проєкти
     const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived" ORDER BY category, id').all();
     
     return projects.map(project => {
+        // До кожного проєкту шукаємо останній запис в історії (project_scores)
         const lastScore = db.prepare(`
             SELECT score, scan_date 
             FROM project_scores 
@@ -16,6 +18,7 @@ function getProjectsWithScores() {
             ORDER BY checked_at DESC LIMIT 1
         `).get(project.id);
 
+        // Формуємо кнопку звіту
         const reportButton = project.report_url && project.report_url !== 'https://example.com'
             ? `<a href="${project.report_url}" target="_blank"><button class="btn-primary" style="padding: 2px 8px; font-size: 0.8rem;">Report</button></a>`
             : `<button disabled style="opacity: 0.5; cursor: not-allowed; padding: 2px 8px;">Report</button>`;
@@ -31,13 +34,13 @@ function getProjectsWithScores() {
     });
 }
 
-// GET: Головна сторінка (Швидке завантаження з БД)
+// GET: Головна сторінка
 router.get('/', (req, res) => {
     try {
         const activeProjectsData = getProjectsWithScores();
         const onHoldProjects = db.prepare('SELECT * FROM on_hold_projects ORDER BY category, id').all();
 
-        // Розрахунок середніх значень
+        // Рахуємо середні значення по категоріях
         const categories = [...new Set(activeProjectsData.map(p => p.category))];
         const averageScores = categories.map(cat => {
             const projs = activeProjectsData.filter(p => p.category === cat && typeof p.scoreValue === 'number' && p.scoreValue > 0);
@@ -58,13 +61,14 @@ router.get('/', (req, res) => {
     }
 });
 
-// POST: Ручне оновлення даних (тривалий процес)
+// POST: Оновлення даних (ПАРСИНГ)
 router.post('/refresh', async (req, res) => {
     try {
         console.log("Starting manual refresh...");
         const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived"').all();
         
-        // Парсимо кожен проєкт по черзі
+        // ВАЖЛИВО: Використовуємо звичайний цикл замість p-limit
+        // Це робить запити по черзі, що економить пам'ять на Render
         for (const project of projects) {
             await parser.updateProjectScore(project);
         }
