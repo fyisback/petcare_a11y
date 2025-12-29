@@ -1,4 +1,5 @@
-FROM ghcr.io/puppeteer/puppeteer:21.5.0
+# ОНОВЛЕНА ВЕРСІЯ (містить новіший Node.js)
+FROM ghcr.io/puppeteer/puppeteer:24.1.0
 
 USER root
 WORKDIR /usr/src/app
@@ -6,13 +7,13 @@ WORKDIR /usr/src/app
 # 1. Копіюємо все
 COPY . .
 
-# 2. 🔥 ГОЛОВНЕ: Видаляємо "чужі" node_modules
+# 2. Видаляємо сміття
 RUN rm -rf node_modules package-lock.json
 
-# 3. Копіюємо package.json окремо (щоб точно був)
+# 3. Копіюємо package.json
 COPY package.json ./
 
-# 4. Ставимо чисті модулі
+# 4. Ставимо залежності
 RUN npm install --omit=dev
 
 # 5. Лагодимо базу даних
