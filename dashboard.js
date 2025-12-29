@@ -3,7 +3,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../services/db');
 const parser = require('../services/parser');
+// ТУТ НЕ МАЄ БУТИ require('p-limit')
 
+// Функція читання даних з БД
 function getProjectsWithScores() {
     const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived" ORDER BY category, id').all();
     
@@ -30,10 +32,12 @@ function getProjectsWithScores() {
     });
 }
 
+// GET: Головна сторінка
 router.get('/', (req, res) => {
     try {
         const activeProjectsData = getProjectsWithScores();
         const onHoldProjects = db.prepare('SELECT * FROM on_hold_projects ORDER BY category, id').all();
+
         const categories = [...new Set(activeProjectsData.map(p => p.category))];
         const averageScores = categories.map(cat => {
             const projs = activeProjectsData.filter(p => p.category === cat && typeof p.scoreValue === 'number' && p.scoreValue > 0);
@@ -54,12 +58,13 @@ router.get('/', (req, res) => {
     }
 });
 
+// POST: Оновлення (ПАРСИНГ)
 router.post('/refresh', async (req, res) => {
     try {
         console.log("Starting manual refresh...");
         const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived"').all();
         
-        // БЕЗПЕЧНИЙ ЦИКЛ: Парсимо строго по одному, щоб не перевантажити Render
+        // ВАЖЛИВО: Простий цикл for замість p-limit
         for (const project of projects) {
             await parser.updateProjectScore(project);
         }
