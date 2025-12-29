@@ -40,18 +40,15 @@ async function fetchData(url) {
         const browser = await getBrowser();
         page = await browser.newPage();
 
-        // Встановлюємо User-Agent, щоб сайт не думав, що ми бот
+        // Маскуємось під звичайного користувача
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
         console.log(`Navigating to ${url}...`);
-        
-        // Зменшуємо таймаут до 20 секунд
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
 
-        // Даємо ще 5 секунд на підвантаження JS
+        // Даємо час на промальовку JS
         await new Promise(r => setTimeout(r, 5000));
 
-        // Спроба знайти хоч щось схоже на оцінку
         const html = await page.content();
         return html;
 
@@ -75,70 +72,47 @@ function parseProjectDetails(mainHtml, url) {
     try {
         const $ = cheerio.load(mainHtml);
         
-        // --- ДІАГНОСТИКА ---
-        console.log(`[DEBUG] Parsing URL: ${url}`);
-        const pageTitle = $('title').text().trim();
-        console.log(`[DEBUG] Page Title: "${pageTitle}"`);
-        
-        // 1. Перевіряємо старий клас
+        // 1. Отримуємо Score (Оцінку)
+        // Шукаємо старий клас або резервний варіант
         let scoreElement = $('.c8e6500e7682');
-        let method = 'Old Class';
-
-        // 2. Якщо не знайшли, шукаємо ВСІ елементи, які містять знак %
         if (scoreElement.length === 0) {
-            console.log(`[DEBUG] Old class .c8e6500e7682 NOT found. Searching for text containing "%"...`);
-            
-            // Шукаємо будь-який div, span або h1/h2, що містить %
-            const possibleScores = $('div, span, h1, h2, p').filter((i, el) => {
-                const text = $(el).text().trim();
-                // Шукаємо текст, схожий на "85%" або "92.5%"
-                return /^\d+(\.\d+)?%$/.test(text);
-            });
-
-            if (possibleScores.length > 0) {
-                console.log(`[DEBUG] Found ${possibleScores.length} potential score elements by text content.`);
-                // Беремо перший знайдений (або найглибший в DOM)
-                scoreElement = possibleScores.eq(0);
-                method = 'Text Search (%)';
-                
-                // Виводимо класи знайденого елемента, щоб ти міг оновити код
-                console.log(`[DEBUG] FOUND ALTERNATIVE! Element classes: "${scoreElement.attr('class')}"`);
-                console.log(`[DEBUG] Element tag: <${scoreElement.prop('tagName').toLowerCase()}>`);
-            }
+            // Резервний пошук по тексту з %
+            scoreElement = $('div, span, h1').filter((i, el) => /^\d+(\.\d+)?%$/.test($(el).text().trim())).eq(0);
         }
-
         const scoreText = scoreElement.text().trim();
         const scanDate = $('#menu-trigger5').text().trim() || 'N/A';
-        
-        if (!scoreText) {
-            console.log(`[FAIL] Score not found.`);
-            // Виводимо шматок HTML (перші 2000 символів body), щоб ти подивився, що там взагалі є
-            const bodySnippet = $('body').html()?.substring(0, 1500) || 'Body is empty';
-            console.log(`[DEBUG HTML SNIPPET]: \n${bodySnippet}\n...`);
-            return errorResult;
-        }
 
-        console.log(`[SUCCESS] Found score: "${scoreText}" using method: ${method}`);
-
-        // Спроба знайти Issues (Critical, Serious і т.д.)
-        // Якщо старий клас не працює, спробуємо знайти таблицю або список
-        let issueElements = $('.f5b9d169f9da');
-        if (issueElements.length === 0) {
-             // Тут можна додати логіку пошуку issues, якщо вони теж відпали
-             console.log(`[DEBUG] Issues list (.f5b9d169f9da) not found.`);
-        }
-        
-        issueElements = issueElements.slice(0, 5);
-        const values = issueElements.map((i, el) => $(el).text().trim()).get();
-
-        return {
-            score: scoreText,
-            scanDate: scanDate,
-            success: true,
-            scoreValue: parseFloat(scoreText.replace('%', '')) || 0,
-            minorIssues: values[3] || '',
-            parsedFields: ['', values[4], values[0], values[1], values[2], '']
+        // 2. Парсимо Issues (Total, Critical, Serious, Moderate, Minor)
+        // Функція-помічник для витягування числа за ID заголовка
+        const getCountById = (id) => {
+            // Знаходимо лейбл (наприклад "Critical"), піднімаємось до <li>, шукаємо значення в .f5b9d169f9da
+            const el = $(`#${id}`).closest('li').find('.f5b9d169f9da');
+            if (el.length) {
+                // Видаляємо зайві слова (типу "тис."), залишаємо цифри
+                return el.text().trim().replace(/[^\d]/g, '') || '0';
+            }
+            return '0';
         };
+
+        const critical = getCountById('issue-count-critical');
+        const serious = getCountById('issue-count-serious');
+        const moderate = getCountById('issue-count-moderate');
+        const minor = getCountById('issue-count-minor');
+        const total = getCountById('issue-count-total');
+        // needsReview поки не виводимо в таблицю, але можемо отримати: getCountById('issue-count-needsReview')
+
+        // Формуємо об'єкт результату
+        return {
+            score: scoreText || 'N/A',
+            scanDate: scanDate,
+            success: !!scoreText,
+            scoreValue: parseFloat(scoreText?.replace('%', '')) || 0,
+            minorIssues: minor, // Зберігаємо Minor окремо, якщо знадобиться
+            // Важливо: Порядок у масиві parsedFields має відповідати колонкам у dashboard.ejs
+            // [0]=пустий, [1]=Total, [2]=Critical, [3]=Serious, [4]=Moderate, [5]=пустий
+            parsedFields: ['', total, critical, serious, moderate, '']
+        };
+
     } catch (e) {
         console.error(`Parsing error for ${url}:`, e);
         return errorResult;
