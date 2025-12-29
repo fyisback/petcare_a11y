@@ -1,167 +1,63 @@
-<%- include('partials/header') %>
-<div style="margin: 20px 0; display: flex; justify-content: flex-end;">
-    <form action="/refresh" method="POST" onsubmit="const btn = document.getElementById('refreshBtn'); btn.disabled = true; btn.innerText = 'Scanning... Please wait (approx 1-2 mins)'; btn.style.backgroundColor = '#6c757d';">
-        <button type="submit" id="refreshBtn" class="btn btn-primary" style="background-color: #28a745; padding: 10px 20px; font-size: 1rem;">
-            🔄 Refresh All Data
-        </button>
-    </form>
-</div>
-<h2>Active Projects Report</h2>
-<% if (activeProjectsData && activeProjectsData.length > 0) { %>
-    <div class="table-container">
-        <table id="projects-table">
-            <thead>
+<div class="table-responsive">
+    <table id="projects-table" class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col" data-column="0" data-sort-type="text">Project Title / URL</th>
+                <th scope="col" data-column="1" data-sort-type="score">Score</th>
+                
+                <th scope="col" data-column="2" data-sort-type="number" style="text-align: center;">Total</th>
+                <th scope="col" data-column="3" data-sort-type="number" style="text-align: center;">Critical</th>
+                <th scope="col" data-column="4" data-sort-type="number" style="text-align: center;">Serious</th>
+                <th scope="col" data-column="5" data-sort-type="number" style="text-align: center;">Moderate</th>
+                
+                <th scope="col">Scan Date</th>
+                <th scope="col">Report</th>
+                <th scope="col" data-column="8" data-sort-type="category">Category</th>
+                <th scope="col">Details</th>
+                <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% activeProjectsData.forEach(project => { %>
+                <%
+                    let cellStyle = '';
+                    if (project.success && typeof project.scoreValue === 'number') {
+                        if (project.scoreValue < 80) cellStyle = 'background-color: #dc3545; color: white;';
+                        else if (project.scoreValue < 90) cellStyle = 'background-color: #ffc107; color: black;';
+                        else cellStyle = 'background-color: #28a745; color: white;';
+                    }
+                %>
                 <tr>
-                    <th scope="col" data-column="0" data-sort-type="text">Project Title / URL</th>
-                    <th scope="col" data-column="1" data-sort-type="score">Score</th>
-                    <th scope="col">Total</th>
-                    <th scope="col">Critical</th>
-                    <th scope="col">Serious</th>
-                    <th scope="col">Moderate</th>
-                    <th scope="col">Scan Date</th>
-                    <th scope="col">Report</th>
-                    <th scope="col" data-column="8" data-sort-type="category">Category</th>
-                    <th scope="col">Details</th>
-                    <th scope="col">AxeMonitor Status</th>
+                    <td title="<%= project.project_url %>">
+                        <strong><%= project.custom_title || project.project_url %></strong><br>
+                        <a href="<%= project.project_url %>" target="_blank" style="font-size: 0.8em; color: #007bff;">Open Site</a>
+                    </td>
+
+                    <td style="<%= cellStyle %>; text-align: center; font-weight: bold;" data-score="<%= project.scoreValue %>">
+                        <%= project.score %>
+                    </td>
+
+                    <td style="text-align: center; font-weight: bold;"><%= project.total %></td>
+
+                    <td style="text-align: center; color: #dc3545; font-weight: bold;"><%= project.critical %></td>
+
+                    <td style="text-align: center; color: #fd7e14; font-weight: bold;"><%= project.serious %></td>
+
+                    <td style="text-align: center;"><%= project.moderate %></td>
+
+                    <td style="font-size: 0.85rem;"><%= project.scanDate %></td>
+
+                    <td style="text-align: center;"><%- project.reportButton %></td>
+
+                    <td><%= project.category %></td>
+
+                    <td style="text-align: center;">
+                        <a href="/project/<%= project.id %>/score-history"><button class="btn btn-sm btn-secondary">Details</button></a>
+                    </td>
+
+                    <td><%= project.status %></td>
                 </tr>
-            </thead>
-            <tbody>
-                <% activeProjectsData.forEach(project => { %>
-                    <%
-                        let cellStyle = '';
-                        if (project.success && typeof project.scoreValue === 'number') {
-                            if (project.scoreValue < 80) cellStyle = 'background-color: #dc3545; color: white;';
-                            else if (project.scoreValue < 90) cellStyle = 'background-color: #ffc107; color: black;';
-                            else cellStyle = 'background-color: #28a745; color: white;';
-                        } else {
-                            cellStyle = 'background-color: #6c757d; color: white;';
-                        }
-                    %>
-                    <tr>
-                        <td>
-                            <a href="<%= project.project_url %>" target="_blank" title="<%= project.project_url %>">
-                                <%= project.custom_title || project.project_url %>
-                            </a>
-                        </td>
-                        <td style="<%= cellStyle %>" data-score="<%= project.scoreValue || -1 %>"><%= project.score || 'N/A' %></td>
-                        <td><%= project.field4 || 'N/A' %></td>
-                        <td><%= project.field5 || 'N/A' %></td>
-                        <td><%= project.field6 || 'N/A' %></td>
-                        <td><%= project.field7 || 'N/A' %></td>
-                        <td><%= project.scanDate || 'N/A' %></td>
-                        <td><%- project.reportButton %></td>
-                        <td><%= project.category %></td>
-                        <td><a href="/dashboard/project/<%= project.id %>/score-history">View Details</a></td>
-                        <td><%= project.status || 'N/A' %></td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    </div>
-<% } else { %>
-    <p>No active projects found.</p>
-<% } %>
-
-<h2>Average Scores</h2>
-<% if (averageScores && averageScores.length > 0) { %>
-     <div class="table-container average-table">
-        <table>
-            <thead><tr><th scope="col">Category</th><th scope="col">Average Score</th></tr></thead>
-            <tbody>
-                <% averageScores.forEach(avg => { %>
-                    <%
-                        let avgValue = parseFloat(avg.average);
-                        let avgCellStyle = '';
-                         if (!isNaN(avgValue)) {
-                            if (avgValue < 80) avgCellStyle = 'background-color: #dc3545; color: white;';
-                            else if (avgValue < 90) avgCellStyle = 'background-color: #ffc107; color: black;';
-                            else avgCellStyle = 'background-color: #28a745; color: white;';
-                        }
-                    %>
-                    <tr>
-                        <td><%= avg.category %></td>
-                        <td style="<%= avgCellStyle %>"><%= avg.average !== 'N/A' ? avg.average + '%' : 'N/A' %></td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    </div>
-<% } %>
-
-<h2>On Hold Projects</h2>
-<% if (onHoldProjects && onHoldProjects.length > 0) { %>
-    <div class="table-container">
-        <table>
-            <thead><tr><th scope="col">Project Title / URL</th><th scope="col">Report URL</th><th scope="col">Category</th></tr></thead>
-            <tbody>
-                <% onHoldProjects.forEach(project => { %>
-                    <tr>
-                        <td>
-                            <a href="<%= project.project_url %>" target="_blank" title="<%= project.project_url %>">
-                                <%= project.custom_title || project.project_url %>
-                            </a>
-                        </td>
-                         <td>
-                            <% if (project.report_url && project.report_url !== 'https://example.com') { %>
-                                <a href="<%= project.report_url %>" target="_blank">View Report</a>
-                            <% } else { %>
-                                N/A
-                            <% } %>
-                        </td>
-                        <td><%= project.category %></td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    </div>
-<% } %>
-
-<%- include('partials/footer') %>
-
-<style>
-    #projects-table thead th[data-column] { cursor: pointer; position: relative; }
-    #projects-table thead th[data-column]::after { content: ''; position: absolute; right: 8px; top: 50%; margin-top: -8px; border: 4px solid transparent; opacity: 0.3; }
-    #projects-table thead th.sort-asc::after { border-bottom-color: currentColor; opacity: 1; }
-    #projects-table thead th.sort-desc::after { border-top-color: currentColor; opacity: 1; }
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const table = document.getElementById('projects-table');
-    if (!table) return;
-
-    const headers = table.querySelectorAll('th[data-column]');
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const columnIndex = parseInt(header.dataset.column);
-            const sortType = header.dataset.sortType;
-            const currentOrder = header.classList.contains('sort-asc') ? 'asc' : 'desc';
-            const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-
-            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
-            header.classList.add(`sort-${newOrder}`);
-
-            rows.sort((rowA, rowB) => {
-                let valA, valB;
-                if (sortType === 'score') {
-                    valA = parseFloat(rowA.cells[columnIndex].dataset.score);
-                    valB = parseFloat(rowB.cells[columnIndex].dataset.score);
-                } else {
-                    valA = rowA.cells[columnIndex].textContent.trim().toLowerCase();
-                    valB = rowB.cells[columnIndex].textContent.trim().toLowerCase();
-                }
-
-                if (valA < valB) return newOrder === 'asc' ? -1 : 1;
-                if (valA > valB) return newOrder === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            tbody.innerHTML = '';
-            rows.forEach(row => tbody.appendChild(row));
-        });
-    });
-});
-</script>
+            <% }) %>
+        </tbody>
+    </table>
+</div>

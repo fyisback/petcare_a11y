@@ -4,14 +4,13 @@ const router = express.Router();
 const db = require('../services/db');
 const parser = require('../services/parser');
 
-// Функція отримання даних
 function getProjectsWithScores() {
-    // ВИПРАВЛЕННЯ 1: Замінили подвійні лапки на одинарні ('Archived')
     const projects = db.prepare("SELECT * FROM projects WHERE status != 'Archived' ORDER BY category, id").all();
     
     return projects.map(project => {
+        // Читаємо ВСІ колонки, включаючи нові
         const lastScore = db.prepare(`
-            SELECT score, scan_date 
+            SELECT score, scan_date, total_issues, critical_issues, serious_issues, moderate_issues, minor_issues
             FROM project_scores 
             WHERE project_id = ? 
             ORDER BY checked_at DESC LIMIT 1
@@ -26,13 +25,20 @@ function getProjectsWithScores() {
             score: lastScore ? lastScore.score + '%' : 'N/A',
             scoreValue: lastScore ? lastScore.score : 0,
             scanDate: lastScore ? lastScore.scan_date : 'No scans yet',
+            
+            // Мапимо колонки БД (xxx_issues) на зручні поля для EJS
+            total: lastScore ? (lastScore.total_issues || '0') : 'N/A',
+            critical: lastScore ? (lastScore.critical_issues || '0') : 'N/A',
+            serious: lastScore ? (lastScore.serious_issues || '0') : 'N/A',
+            moderate: lastScore ? (lastScore.moderate_issues || '0') : 'N/A',
+            minor: lastScore ? (lastScore.minor_issues || '0') : 'N/A',
+
             success: !!lastScore,
             reportButton
         };
     });
 }
 
-// GET: Головна
 router.get('/', (req, res) => {
     try {
         const activeProjectsData = getProjectsWithScores();
@@ -54,22 +60,18 @@ router.get('/', (req, res) => {
         });
     } catch (err) {
         console.error("Error loading dashboard:", err);
-        // ВИПРАВЛЕННЯ 2: Додали pageTitle, щоб сторінка помилки не падала
         res.render('error', { error: err, pageTitle: 'Error Loading Dashboard' });
     }
 });
 
-// POST: Оновлення
 router.post('/refresh', async (req, res) => {
     try {
         console.log("Starting manual refresh...");
-        // ВИПРАВЛЕННЯ 3: Тут теж лапки ('Archived')
         const projects = db.prepare("SELECT * FROM projects WHERE status != 'Archived'").all();
         
         for (const project of projects) {
             await parser.updateProjectScore(project);
         }
-
         res.redirect('/');
     } catch (err) {
         console.error("Error during refresh:", err);
