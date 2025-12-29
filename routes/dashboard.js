@@ -3,11 +3,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../services/db');
 const parser = require('../services/parser');
-// ТУТ НЕ МАЄ БУТИ require('p-limit')
 
-// Функція читання даних з БД
+// Функція отримання даних
 function getProjectsWithScores() {
-    const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived" ORDER BY category, id').all();
+    // ВИПРАВЛЕННЯ 1: Замінили подвійні лапки на одинарні ('Archived')
+    const projects = db.prepare("SELECT * FROM projects WHERE status != 'Archived' ORDER BY category, id").all();
     
     return projects.map(project => {
         const lastScore = db.prepare(`
@@ -32,7 +32,7 @@ function getProjectsWithScores() {
     });
 }
 
-// GET: Головна сторінка
+// GET: Головна
 router.get('/', (req, res) => {
     try {
         const activeProjectsData = getProjectsWithScores();
@@ -54,17 +54,18 @@ router.get('/', (req, res) => {
         });
     } catch (err) {
         console.error("Error loading dashboard:", err);
-        res.render('error', { error: err });
+        // ВИПРАВЛЕННЯ 2: Додали pageTitle, щоб сторінка помилки не падала
+        res.render('error', { error: err, pageTitle: 'Error Loading Dashboard' });
     }
 });
 
-// POST: Оновлення (ПАРСИНГ)
+// POST: Оновлення
 router.post('/refresh', async (req, res) => {
     try {
         console.log("Starting manual refresh...");
-        const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived"').all();
+        // ВИПРАВЛЕННЯ 3: Тут теж лапки ('Archived')
+        const projects = db.prepare("SELECT * FROM projects WHERE status != 'Archived'").all();
         
-        // ВАЖЛИВО: Простий цикл for замість p-limit
         for (const project of projects) {
             await parser.updateProjectScore(project);
         }
