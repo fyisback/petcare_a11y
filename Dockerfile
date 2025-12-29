@@ -3,18 +3,22 @@ FROM ghcr.io/puppeteer/puppeteer:21.5.0
 USER root
 WORKDIR /usr/src/app
 
-# Копіюємо конфіги і ставимо залежності
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-# Копіюємо решту файлів (включаючи потенційно "погані" node_modules з твого ПК)
+# 1. Копіюємо все
 COPY . .
 
-# 🔥 ГОЛОВНЕ ВИПРАВЛЕННЯ:
-# Примусово перекомпілюємо better-sqlite3 під систему Render
+# 2. 🔥 ГОЛОВНЕ: Видаляємо "чужі" node_modules
+RUN rm -rf node_modules package-lock.json
+
+# 3. Копіюємо package.json окремо (щоб точно був)
+COPY package.json ./
+
+# 4. Ставимо чисті модулі
+RUN npm install --omit=dev
+
+# 5. Лагодимо базу даних
 RUN npm rebuild better-sqlite3
 
-# Налаштовуємо права доступу
+# 6. Права доступу
 RUN mkdir -p /usr/src/app/data && chown -R pptruser:pptruser /usr/src/app/data
 
 USER pptruser
