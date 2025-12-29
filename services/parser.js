@@ -45,7 +45,7 @@ async function fetchData(url) {
         console.log(`Navigating to ${url}...`);
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
         
-        // Чекаємо трохи довше, щоб переконатися, що JS відпрацював
+        // Чекаємо трохи довше для великих сторінок
         await new Promise(r => setTimeout(r, 6000));
 
         const html = await page.content();
@@ -60,6 +60,34 @@ async function fetchData(url) {
     }
 }
 
+// 🔥 НОВА ФУНКЦІЯ: Перетворює "1.6K" у 1600, "70" у 70
+function normalizeCount(rawText) {
+    if (!rawText) return '0';
+    let text = rawText.trim().toUpperCase();
+
+    // Якщо це прочерк або N/A
+    if (['-', '–', '—', 'N/A', ''].includes(text)) return '0';
+
+    // Множник для тисяч (K) або мільйонів (M)
+    let multiplier = 1;
+    if (text.endsWith('K')) {
+        multiplier = 1000;
+        text = text.replace('K', '');
+    } else if (text.endsWith('M')) {
+        multiplier = 1000000;
+        text = text.replace('M', '');
+    }
+
+    // Видаляємо все, крім цифр і крапки (щоб розпізнати 1.6)
+    text = text.replace(/[^\d.]/g, '');
+
+    const number = parseFloat(text);
+    if (isNaN(number)) return '0';
+
+    // Повертаємо фінальне число (наприклад 1.6 * 1000 = 1600)
+    return Math.floor(number * multiplier).toString();
+}
+
 function parseProjectDetails(mainHtml, url) {
     const errorResult = {
         score: 'N/A', parsedFields: ['', '', '', '', '', ''], scanDate: 'Failed',
@@ -71,38 +99,34 @@ function parseProjectDetails(mainHtml, url) {
     try {
         const $ = cheerio.load(mainHtml);
         
-        // 1. Отримуємо Score (Оцінку)
+        // 1. Отримуємо Score
         let scoreElement = $('.c8e6500e7682');
         if (scoreElement.length === 0) {
-            // Резервний пошук, якщо клас змінився
             scoreElement = $('div, span, h1').filter((i, el) => /^\d+(\.\d+)?%$/.test($(el).text().trim())).eq(0);
         }
         const scoreText = scoreElement.text().trim();
         const scanDate = $('#menu-trigger5').text().trim() || 'N/A';
 
-        // 2. Розумна функція пошуку Issues
+        // 2. Отримуємо Issues
         const getCountById = (id) => {
-            // СПРОБА 1: Шукаємо елемент, який прямо посилається на ID (aria-describedby="issue-count-critical")
-            // Це працює для посилань <a> (коли помилок > 0)
+            // Метод 1: aria-describedby
             let el = $(`[aria-describedby="${id}"]`);
             let method = 'aria-link';
 
-            // СПРОБА 2: Якщо атрибута немає (зазвичай це <span> з 0), шукаємо через батьківський <li>
+            // Метод 2: parent-li
             if (el.length === 0) {
-                // Знаходимо сам лейбл (#issue-count-critical), йдемо до батька <li>, шукаємо цифру (.f5b9d169f9da)
                 el = $(`#${id}`).closest('li').find('.f5b9d169f9da');
                 method = 'parent-li';
             }
 
             if (el.length) {
                 const rawText = el.text().trim();
-                console.log(`[DEBUG] ${id}: found "${rawText}" via ${method}`); // Лог для перевірки
-
-                if (['-', '–', '—', 'N/A', ''].includes(rawText)) return '0';
-                return rawText.replace(/[^\d]/g, '') || '0';
+                console.log(`[DEBUG] ${id}: raw "${rawText}" via ${method}`);
+                
+                // Використовуємо нову логіку нормалізації
+                return normalizeCount(rawText);
             }
             
-            console.log(`[DEBUG] ${id}: NOT FOUND`);
             return '0';
         };
 
@@ -112,13 +136,15 @@ function parseProjectDetails(mainHtml, url) {
         const minor = getCountById('issue-count-minor');
         const total = getCountById('issue-count-total');
 
+        console.log(`[RESULT] ${url} -> Total: ${total}, Crit: ${critical}, Serious: ${serious}`);
+
         return {
             score: scoreText || 'N/A',
             scanDate: scanDate,
             success: !!scoreText,
             scoreValue: parseFloat(scoreText?.replace('%', '')) || 0,
             minorIssues: minor, 
-            // Порядок: [пусто, Total, Critical, Serious, Moderate, пусто]
+            // Порядок колонок [пусто, Total, Critical, Serious, Moderate, пусто]
             parsedFields: ['', total, critical, serious, moderate, '']
         };
 
@@ -135,8 +161,13 @@ async function updateProjectScore(project) {
     if (data.success) {
         const lastScan = db.prepare('SELECT scan_date FROM project_scores WHERE project_id = ? ORDER BY checked_at DESC LIMIT 1').get(project.id);
         
+        // Оновлюємо, якщо дата змінилася АБО якщо ми хочемо оновити статистику помилок (можна прибрати умову lastScan, щоб писати завжди)
+        // Для надійності я зараз залишаю запис тільки нових сканів, 
+        // але якщо ти хочеш переписати старі неправильні "16" на "1600", треба видалити перевірку дати.
+        
         if (!lastScan || lastScan.scan_date !== data.scanDate) {
             console.log(`New data found for project ${project.id}. Saving.`);
+            // Ми зберігаємо html issues в null, бо в нас тепер окремі колонки в parsedFields
             db.prepare('INSERT INTO project_scores (project_id, score, scan_date) VALUES (?, ?, ?)')
               .run(project.id, data.scoreValue, data.scanDate);
         }
