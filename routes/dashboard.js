@@ -3,121 +3,77 @@ const express = require('express');
 const router = express.Router();
 const db = require('../services/db');
 const parser = require('../services/parser');
-const pLimit = require('p-limit').default;
+// ТУТ НЕ МАЄ БУТИ require('p-limit')
 
-const limit = pLimit(5);
+// Функція читання даних з БД
+function getProjectsWithScores() {
+    const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived" ORDER BY category, id').all();
+    
+    return projects.map(project => {
+        const lastScore = db.prepare(`
+            SELECT score, scan_date 
+            FROM project_scores 
+            WHERE project_id = ? 
+            ORDER BY checked_at DESC LIMIT 1
+        `).get(project.id);
 
-// No changes to the main dashboard route '/' or calculateCategoryAverages
-function calculateCategoryAverages(parsedData) {
-    const categories = ['NBM', 'ThirdParty', 'NPPC'];
-    const categoryScores = categories.reduce((acc, category) => ({ ...acc, [category]: { sum: 0, count: 0 } }), {});
-    let totalSum = 0, totalCount = 0;
-    parsedData.forEach(data => {
-        if (data.success && typeof data.scoreValue === 'number') {
-            if (categories.includes(data.category)) {
-                categoryScores[data.category].sum += data.scoreValue;
-                categoryScores[data.category].count++;
-            }
-            totalSum += data.scoreValue;
-            totalCount++;
-        }
+        const reportButton = project.report_url && project.report_url !== 'https://example.com'
+            ? `<a href="${project.report_url}" target="_blank"><button class="btn-primary" style="padding: 2px 8px; font-size: 0.8rem;">Report</button></a>`
+            : `<button disabled style="opacity: 0.5; cursor: not-allowed; padding: 2px 8px;">Report</button>`;
+
+        return {
+            ...project,
+            score: lastScore ? lastScore.score + '%' : 'N/A',
+            scoreValue: lastScore ? lastScore.score : 0,
+            scanDate: lastScore ? lastScore.scan_date : 'No scans yet',
+            success: !!lastScore,
+            reportButton
+        };
     });
-    const averages = Object.entries(categoryScores).map(([category, { sum, count }]) => ({
-        category, average: count > 0 ? (sum / count).toFixed(2) : 'N/A',
-    }));
-    averages.unshift({ category: 'Total', average: totalCount > 0 ? (totalSum / totalCount).toFixed(2) : 'N/A' });
-    return averages;
 }
 
-router.get('/', async (req, res, next) => {
+// GET: Головна сторінка
+router.get('/', (req, res) => {
     try {
-        const activeProjects = db.prepare('SELECT * FROM projects ORDER BY id').all();
-        const onHoldProjects = db.prepare('SELECT * FROM on_hold_projects ORDER BY id').all();
-        const parsingPromises = activeProjects.map(project => limit(() => parser.getParsedDataForProject(project)));
-        const parsedProjectData = await Promise.all(parsingPromises);
-        const averageScores = calculateCategoryAverages(parsedProjectData);
+        const activeProjectsData = getProjectsWithScores();
+        const onHoldProjects = db.prepare('SELECT * FROM on_hold_projects ORDER BY category, id').all();
+
+        const categories = [...new Set(activeProjectsData.map(p => p.category))];
+        const averageScores = categories.map(cat => {
+            const projs = activeProjectsData.filter(p => p.category === cat && typeof p.scoreValue === 'number' && p.scoreValue > 0);
+            const avg = projs.length ? (projs.reduce((sum, p) => sum + p.scoreValue, 0) / projs.length).toFixed(1) : 'N/A';
+            return { category: cat, average: avg };
+        });
+
         res.render('dashboard', {
-            pageTitle: 'Project Dashboard',
-            activeProjectsData: parsedProjectData,
-            averageScores: averageScores,
-            onHoldProjects: onHoldProjects
+            pageTitle: 'Dashboard',
+            activeProjectsData,
+            averageScores,
+            onHoldProjects,
+            error: req.query.error
         });
     } catch (err) {
-        console.error("Error fetching data for dashboard:", err);
-        next(err);
+        console.error("Error loading dashboard:", err);
+        res.render('error', { error: err });
     }
 });
 
-router.get('/project/:id/score-history', (req, res, next) => {
+// POST: Оновлення (ПАРСИНГ)
+router.post('/refresh', async (req, res) => {
     try {
-        const projectId = req.params.id;
-        const project = db.prepare('SELECT id, custom_title, project_url, meeting_notes FROM projects WHERE id = ?').get(projectId);
-
-        if (!project) {
-            return res.status(404).render('404', { pageTitle: 'Project Not Found' });
+        console.log("Starting manual refresh...");
+        const projects = db.prepare('SELECT * FROM projects WHERE status != "Archived"').all();
+        
+        // ВАЖЛИВО: Простий цикл for замість p-limit
+        for (const project of projects) {
+            await parser.updateProjectScore(project);
         }
 
-        const scores = db.prepare('SELECT id, score, scan_date, checked_at, issues_html FROM project_scores WHERE project_id = ? ORDER BY checked_at ASC').all(projectId);
-        const actionItems = db.prepare('SELECT * FROM project_action_items WHERE project_id = ? ORDER BY created_at DESC').all(projectId);
-
-        res.render('score-history', {
-            pageTitle: `Details for ${project.custom_title || project.project_url}`,
-            project,
-            scores,
-            actionItems,
-            message: req.query.message
-        });
+        res.redirect('/');
     } catch (err) {
-        console.error(`Error fetching score history for project ID ${req.params.id}:`, err);
-        next(err);
+        console.error("Error during refresh:", err);
+        res.redirect('/?error=RefreshFailed');
     }
-});
-
-router.post('/project/notes/:projectId', (req, res) => {
-    const { projectId } = req.params;
-    const { notes } = req.body;
-    try {
-        const stmt = db.prepare('UPDATE projects SET meeting_notes = ? WHERE id = ?');
-        stmt.run(notes, projectId);
-        res.redirect(`/project/${projectId}/score-history?message=Notes%20saved%20successfully.`);
-    } catch (err) {
-        console.error(`Error saving notes for project ID ${projectId}:`, err);
-        res.redirect(`/project/${projectId}/score-history?message=Error%20saving%20notes.`);
-    }
-});
-
-// UPDATED: The add route now handles the 'description' field.
-router.post('/project/:projectId/action-items/add', (req, res) => {
-    const { projectId } = req.params;
-    const { task, description, owner, priority } = req.body;
-    try {
-        db.prepare('INSERT INTO project_action_items (project_id, task, description, owner, priority) VALUES (?, ?, ?, ?, ?)')
-          .run(projectId, task, description, owner, priority);
-    } catch (err) {
-        console.error("Error adding action item:", err);
-    }
-    res.redirect(`/project/${projectId}/score-history`);
-});
-
-router.post('/project/:projectId/action-items/update/:itemId', (req, res) => {
-    const { projectId, itemId } = req.params;
-    const { status } = req.body;
-    try {
-        db.prepare('UPDATE project_action_items SET status = ? WHERE id = ?').run(status, itemId);
-    } catch (err) {
-        console.error("Error updating action item:", err);
-    }
-    res.redirect(`/project/${projectId}/score-history`);
-});
-
-router.post('/project/:projectId/action-items/delete/:itemId', (req, res) => {
-    const { projectId, itemId } = req.params;
-    try {
-        db.prepare('DELETE FROM project_action_items WHERE id = ?').run(itemId);
-    } catch (err) {
-        console.error("Error deleting action item:", err);
-    }
-    res.redirect(`/project/${projectId}/score-history`);
 });
 
 module.exports = router;
