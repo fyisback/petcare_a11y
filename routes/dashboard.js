@@ -8,7 +8,6 @@ function getProjectsWithScores() {
     const projects = db.prepare("SELECT * FROM projects WHERE status != 'Archived' ORDER BY category, id").all();
     
     return projects.map(project => {
-        // Читаємо ВСІ колонки, включаючи нові
         const lastScore = db.prepare(`
             SELECT score, scan_date, total_issues, critical_issues, serious_issues, moderate_issues, minor_issues
             FROM project_scores 
@@ -26,7 +25,6 @@ function getProjectsWithScores() {
             scoreValue: lastScore ? lastScore.score : 0,
             scanDate: lastScore ? lastScore.scan_date : 'No scans yet',
             
-            // Мапимо колонки БД (xxx_issues) на зручні поля для EJS
             total: lastScore ? (lastScore.total_issues || '0') : 'N/A',
             critical: lastScore ? (lastScore.critical_issues || '0') : 'N/A',
             serious: lastScore ? (lastScore.serious_issues || '0') : 'N/A',
@@ -44,6 +42,7 @@ router.get('/', (req, res) => {
         const activeProjectsData = getProjectsWithScores();
         const onHoldProjects = db.prepare('SELECT * FROM on_hold_projects ORDER BY category, id').all();
 
+        // 1. Рахуємо середнє по категоріях
         const categories = [...new Set(activeProjectsData.map(p => p.category))];
         const averageScores = categories.map(cat => {
             const projs = activeProjectsData.filter(p => p.category === cat && typeof p.scoreValue === 'number' && p.scoreValue > 0);
@@ -51,10 +50,17 @@ router.get('/', (req, res) => {
             return { category: cat, average: avg };
         });
 
+        // 2. 🔥 НОВЕ: Рахуємо загальне середнє по ВСІХ проектах
+        const allValidProjects = activeProjectsData.filter(p => typeof p.scoreValue === 'number' && p.scoreValue > 0);
+        const grandTotalAverage = allValidProjects.length 
+            ? (allValidProjects.reduce((sum, p) => sum + p.scoreValue, 0) / allValidProjects.length).toFixed(1) 
+            : 'N/A';
+
         res.render('dashboard', {
             pageTitle: 'Dashboard',
             activeProjectsData,
             averageScores,
+            grandTotalAverage, // Передаємо в шаблон
             onHoldProjects,
             error: req.query.error
         });

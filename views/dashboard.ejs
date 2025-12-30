@@ -1,58 +1,149 @@
 <%- include('partials/header') %>
 
-<div class="container-fluid mt-4">
+<style>
+    :root {
+        --purina-red: #E2231A;       /* Офіційний червоний */
+        --purina-dark: #1C1C1C;      /* Майже чорний для тексту/хедера */
+        --purina-grey: #F4F4F4;      /* Світлий фон */
+        --text-color: #333333;       /* Читабельний текст */
+        --border-color: #dddddd;
+    }
+
+    body {
+        background-color: var(--purina-grey);
+        color: var(--text-color);
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Чистий гротеск */
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--purina-dark);
+        font-weight: 700;
+    }
+
+    /* Картки */
+    .card {
+        border: none;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        background-color: white;
+        border-top: 4px solid var(--purina-red); /* Фірмова червона смужка */
+    }
+
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid var(--border-color);
+        font-weight: bold;
+        color: var(--purina-dark);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Кнопка Purina */
+    .btn-purina {
+        background-color: var(--purina-red);
+        color: white;
+        border-radius: 0; /* Більш квадратні кути */
+        font-weight: bold;
+        text-transform: uppercase;
+        border: none;
+        padding: 8px 16px;
+        transition: background 0.2s;
+    }
+
+    .btn-purina:hover {
+        background-color: #b3140d; /* Темніший червоний */
+        color: white;
+    }
+
+    /* Таблиці */
+    .table-purina thead th {
+        background-color: var(--purina-dark);
+        color: white;
+        border: none;
+        border-bottom: 4px solid var(--purina-red); /* Контрастна лінія */
+        vertical-align: middle;
+        font-size: 0.95rem;
+    }
+
+    .table-purina tbody tr {
+        background-color: white;
+        transition: background 0.1s;
+    }
+
+    .table-purina tbody tr:hover {
+        background-color: #fff5f5; /* Легкий рожевий відтінок при наведенні */
+    }
+
+    .table-purina td {
+        vertical-align: middle !important;
+        padding: 12px 10px;
+        border-color: #eee;
+        color: #444;
+        font-size: 0.95rem;
+    }
+
+    /* Статуси та бейджі */
+    .score-badge {
+        display: inline-block;
+        min-width: 50px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        color: white;
+        font-weight: bold;
+    }
+
+    /* Посилання */
+    a { color: var(--purina-red); text-decoration: none; }
+    a:hover { color: var(--purina-dark); text-decoration: underline; }
+
+    /* Issues Colors (для читабельності) */
+    .text-critical { color: #D32F2F; font-weight: 800; }
+    .text-serious { color: #E65100; font-weight: 700; }
+    .text-moderate { color: #F57F17; font-weight: 600; }
+</style>
+
+<div class="container-fluid mt-4 mb-5">
+    
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><%= pageTitle %></h1>
+        <div class="d-flex align-items-center">
+            <h1 class="h3 mb-0 text-gray-800">Accessibility Dashboard</h1>
+        </div>
         
         <form action="/refresh" method="POST" style="display: inline;">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-purina shadow-sm">
                 <i class="fas fa-sync-alt"></i> Refresh All Data
             </button>
         </form>
     </div>
 
     <% if (typeof error !== 'undefined' && error === 'RefreshFailed') { %>
-        <div class="alert alert-danger">
-            Failed to refresh data. Please check server logs.
+        <div class="alert alert-danger shadow-sm border-left-danger">
+            <strong>Error:</strong> Failed to refresh data. Please check server logs.
         </div>
     <% } %>
 
-    <% if (locals.averageScores && averageScores.length > 0) { %>
-        <div class="row mb-4">
-            <% averageScores.forEach(item => { %>
-                <div class="col-md-3">
-                    <div class="card text-white bg-info mb-3">
-                        <div class="card-header"><%= item.category %></div>
-                        <div class="card-body">
-                            <h5 class="card-title">Avg: <%= item.average %>%</h5>
-                        </div>
-                    </div>
-                </div>
-            <% }) %>
+    <div class="card mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <span>Active Projects Monitor</span>
+            <span class="badge badge-secondary" style="background:#ddd; color:#333;"><%= locals.activeProjectsData ? activeProjectsData.length : 0 %> Projects</span>
         </div>
-    <% } %>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Active Projects</h6>
-        </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="projects-table" class="table table-bordered table-striped table-hover" width="100%" cellspacing="0">
-                    <thead class="thead-dark">
+                <table id="projects-table" class="table table-purina mb-0">
+                    <thead>
                         <tr>
-                            <th style="width: 25%;">Project</th>
-                            <th style="text-align: center;">Score</th>
+                            <th style="width: 22%;">Project Name / URL</th>
+                            <th style="text-align: center; width: 80px;">Score</th>
                             
                             <th style="text-align: center;" title="Total Issues">Total</th>
-                            <th style="text-align: center; color: #ffadad;" title="Critical Issues">Crit</th>
-                            <th style="text-align: center; color: #ffd6a5;" title="Serious Issues">Ser</th>
+                            <th style="text-align: center;" title="Critical Issues">Crit</th>
+                            <th style="text-align: center;" title="Serious Issues">Ser</th>
                             <th style="text-align: center;" title="Moderate Issues">Mod</th>
                             
-                            <th style="font-size: 0.9em;">Scan Date</th>
+                            <th style="font-size: 0.9em; width: 100px;">Scan Date</th>
                             <th style="text-align: center;">Report</th>
                             <th>Category</th>
-                            <th style="text-align: center;">History</th>
+                            <th style="text-align: center;">Actions</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -60,40 +151,85 @@
                         <% if (locals.activeProjectsData && activeProjectsData.length > 0) { %>
                             <% activeProjectsData.forEach(project => { %>
                                 <%
-                                    let cellStyle = '';
+                                    let scoreColor = '#28a745'; // Green
                                     if (project.success && typeof project.scoreValue === 'number') {
-                                        if (project.scoreValue < 80) cellStyle = 'background-color: #dc3545; color: white;';
-                                        else if (project.scoreValue < 90) cellStyle = 'background-color: #ffc107; color: black;';
-                                        else cellStyle = 'background-color: #28a745; color: white;';
+                                        if (project.scoreValue < 80) scoreColor = '#D32F2F'; // Red (Critical)
+                                        else if (project.scoreValue < 90) scoreColor = '#FBC02D'; // Yellow/Gold
                                     }
+                                    // Чорний текст для жовтого фону, білий для інших
+                                    let textColor = (project.scoreValue >= 80 && project.scoreValue < 90) ? '#333' : 'white';
                                 %>
                                 <tr>
                                     <td>
-                                        <strong><%= project.custom_title || project.project_url %></strong><br>
-                                        <a href="<%= project.project_url %>" target="_blank" class="small text-primary">Open Site</a>
+                                        <div style="font-weight: 700; font-size: 1.05em;"><%= project.custom_title || project.project_url %></div>
+                                        <a href="<%= project.project_url %>" target="_blank" style="font-size: 0.85em; color: #666;">
+                                            <i class="fas fa-external-link-alt"></i> Open Website
+                                        </a>
                                     </td>
                                     
-                                    <td style="<%= cellStyle %>; text-align: center; font-weight: bold; vertical-align: middle;">
-                                        <%= project.score %>
+                                    <td style="text-align: center;">
+                                        <div class="score-badge shadow-sm" style="background-color: <%= scoreColor %>; color: <%= textColor %>;">
+                                            <%= project.score %>
+                                        </div>
                                     </td>
 
-                                    <td style="text-align: center; font-weight: bold; vertical-align: middle;"><%= project.total %></td>
-                                    <td style="text-align: center; color: #dc3545; font-weight: bold; vertical-align: middle; background-color: #fff3f3;"><%= project.critical %></td>
-                                    <td style="text-align: center; color: #fd7e14; font-weight: bold; vertical-align: middle;"><%= project.serious %></td>
-                                    <td style="text-align: center; vertical-align: middle;"><%= project.moderate %></td>
-
-                                    <td class="small" style="vertical-align: middle;"><%= project.scanDate %></td>
-                                    <td style="text-align: center; vertical-align: middle;"><%- project.reportButton %></td>
-                                    <td style="vertical-align: middle;"><%= project.category %></td>
-                                    <td style="text-align: center; vertical-align: middle;">
-                                        <a href="/project/<%= project.id %>/score-history" class="btn btn-sm btn-info">Details</a>
+                                    <td style="text-align: center; font-weight: bold; color: #555;">
+                                        <%= project.total %>
                                     </td>
-                                    <td style="vertical-align: middle;"><span class="badge badge-secondary"><%= project.status %></span></td>
+
+                                    <td style="text-align: center; background-color: #fff0f0;">
+                                        <% if (project.critical > 0) { %>
+                                            <span class="text-critical"><%= project.critical %></span>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">0</span>
+                                        <% } %>
+                                    </td>
+
+                                    <td style="text-align: center;">
+                                        <% if (project.serious > 0) { %>
+                                            <span class="text-serious"><%= project.serious %></span>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">0</span>
+                                        <% } %>
+                                    </td>
+
+                                    <td style="text-align: center;">
+                                        <% if (project.moderate > 0) { %>
+                                            <span class="text-moderate"><%= project.moderate %></span>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">0</span>
+                                        <% } %>
+                                    </td>
+
+                                    <td class="small text-muted">
+                                        <%= project.scanDate %>
+                                    </td>
+
+                                    <td style="text-align: center;">
+                                        <%- project.reportButton %>
+                                    </td>
+
+                                    <td><span style="font-weight: 500;"><%= project.category %></span></td>
+
+                                    <td style="text-align: center;">
+                                        <a href="/project/<%= project.id %>/score-history" class="btn btn-sm btn-outline-secondary" style="border-radius: 20px; font-size: 0.8rem; padding: 2px 10px;">
+                                            History
+                                        </a>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge badge-light" style="border: 1px solid #ddd; color: #555;">
+                                            <%= project.status %>
+                                        </span>
+                                    </td>
                                 </tr>
                             <% }) %>
                         <% } else { %>
                             <tr>
-                                <td colspan="11" class="text-center">No active projects found.</td>
+                                <td colspan="11" class="text-center py-5">
+                                    <h4 class="text-muted">No active projects found</h4>
+                                    <p>Please click "Refresh All Data" to start a scan.</p>
+                                </td>
                             </tr>
                         <% } %>
                     </tbody>
@@ -102,32 +238,71 @@
         </div>
     </div>
 
-    <% if (locals.onHoldProjects && onHoldProjects.length > 0) { %>
-        <h3 class="mt-5">On Hold Projects</h3>
-        <table class="table table-sm table-secondary">
-            <thead>
-                <tr>
-                    <th>Project</th>
-                    <th>Category</th>
-                    <th>Report</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% onHoldProjects.forEach(project => { %>
-                    <tr>
-                        <td><%= project.custom_title || project.project_url %></td>
-                        <td><%= project.category %></td>
-                        <td>
-                            <% if (project.report_url) { %>
-                                <a href="<%= project.report_url %>" target="_blank">Link</a>
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background-color: var(--purina-dark); color: white; border-bottom: none;">
+                    Statistics Summary
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Group / Category</th>
+                                <th style="text-align: center;">Average Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (locals.averageScores && averageScores.length > 0) { %>
+                                <% averageScores.forEach(item => { %>
+                                    <tr>
+                                        <td><%= item.category %></td>
+                                        <td style="text-align: center; font-weight: bold; color: #555;">
+                                            <%= item.average %>%
+                                        </td>
+                                    </tr>
+                                <% }) %>
                             <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    <% } %>
-
+                            
+                            <tr style="background-color: #fff0f0; border-top: 2px solid var(--purina-red);">
+                                <td style="font-weight: bold; color: var(--purina-red); text-transform: uppercase;">
+                                    All Projects (Grand Total)
+                                </td>
+                                <td style="text-align: center; font-weight: 800; font-size: 1.2em; color: var(--purina-red);">
+                                    <%= locals.grandTotalAverage %>%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <% if (locals.onHoldProjects && onHoldProjects.length > 0) { %>
+                <div class="card shadow-sm h-100" style="border-top: 4px solid #777;">
+                    <div class="card-header">On Hold / Archived</div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0">
+                            <tbody>
+                                <% onHoldProjects.forEach(project => { %>
+                                    <tr>
+                                        <td class="pl-4"><%= project.custom_title || project.project_url %></td>
+                                        <td><span class="badge badge-light"><%= project.category %></span></td>
+                                        <td class="text-right pr-4">
+                                            <% if (project.report_url) { %>
+                                                <a href="<%= project.report_url %>" target="_blank" class="text-muted"><small>Report</small></a>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
 </div>
 
 <%- include('partials/footer') %>
