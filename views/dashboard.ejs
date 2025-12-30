@@ -1,66 +1,57 @@
 <%- include('partials/header') %>
 
 <style>
+    /* Purina Brand Colors */
     :root {
-        --purina-red: #E2231A;       /* Офіційний червоний */
-        --purina-dark: #1C1C1C;      /* Майже чорний для тексту/хедера */
-        --purina-grey: #F4F4F4;      /* Світлий фон */
-        --text-color: #333333;       /* Читабельний текст */
-        --border-color: #dddddd;
+        --purina-red: #E2231A;
+        --purina-dark: #1C1C1C;
+        --purina-grey: #F4F4F4;
     }
 
     body {
         background-color: var(--purina-grey);
-        color: var(--text-color);
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Чистий гротеск */
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--purina-dark);
-        font-weight: 700;
-    }
-
-    /* Картки */
+    /* Cards */
     .card {
         border: none;
         border-radius: 4px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         background-color: white;
-        border-top: 4px solid var(--purina-red); /* Фірмова червона смужка */
+        border-top: 4px solid var(--purina-red);
     }
 
     .card-header {
         background-color: white;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid #ddd;
         font-weight: bold;
         color: var(--purina-dark);
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
-    /* Кнопка Purina */
+    /* Buttons */
     .btn-purina {
         background-color: var(--purina-red);
         color: white;
-        border-radius: 0; /* Більш квадратні кути */
+        border-radius: 0;
         font-weight: bold;
         text-transform: uppercase;
         border: none;
         padding: 8px 16px;
-        transition: background 0.2s;
     }
-
     .btn-purina:hover {
-        background-color: #b3140d; /* Темніший червоний */
+        background-color: #b3140d;
         color: white;
     }
 
-    /* Таблиці */
+    /* Table Styling */
     .table-purina thead th {
         background-color: var(--purina-dark);
         color: white;
         border: none;
-        border-bottom: 4px solid var(--purina-red); /* Контрастна лінія */
+        border-bottom: 4px solid var(--purina-red);
         vertical-align: middle;
         font-size: 0.95rem;
     }
@@ -69,20 +60,18 @@
         background-color: white;
         transition: background 0.1s;
     }
-
     .table-purina tbody tr:hover {
-        background-color: #fff5f5; /* Легкий рожевий відтінок при наведенні */
+        background-color: #fff5f5;
     }
 
     .table-purina td {
         vertical-align: middle !important;
         padding: 12px 10px;
-        border-color: #eee;
         color: #444;
         font-size: 0.95rem;
     }
 
-    /* Статуси та бейджі */
+    /* Badges & Text */
     .score-badge {
         display: inline-block;
         min-width: 50px;
@@ -91,12 +80,9 @@
         color: white;
         font-weight: bold;
     }
-
-    /* Посилання */
     a { color: var(--purina-red); text-decoration: none; }
     a:hover { color: var(--purina-dark); text-decoration: underline; }
 
-    /* Issues Colors (для читабельності) */
     .text-critical { color: #D32F2F; font-weight: 800; }
     .text-serious { color: #E65100; font-weight: 700; }
     .text-moderate { color: #F57F17; font-weight: 600; }
@@ -105,8 +91,11 @@
 <div class="container-fluid mt-4 mb-5">
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center">
+        <div>
             <h1 class="h3 mb-0 text-gray-800">Accessibility Dashboard</h1>
+            <p class="text-muted mb-0 small" style="margin-top: 5px;">
+                <i class="far fa-clock"></i> System Updated: <strong><%= locals.lastSystemUpdate %> (Kyiv Time)</strong>
+            </p>
         </div>
         
         <form action="/refresh" method="POST" style="display: inline;">
@@ -125,7 +114,9 @@
     <div class="card mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <span>Active Projects Monitor</span>
-            <span class="badge badge-secondary" style="background:#ddd; color:#333;"><%= locals.activeProjectsData ? activeProjectsData.length : 0 %> Projects</span>
+            <span class="badge badge-secondary" style="background:#ddd; color:#333;">
+                <%= locals.activeProjectsData ? activeProjectsData.length : 0 %> Projects
+            </span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -140,7 +131,8 @@
                             <th style="text-align: center;" title="Serious Issues">Ser</th>
                             <th style="text-align: center;" title="Moderate Issues">Mod</th>
                             
-                            <th style="font-size: 0.9em; width: 100px;">Scan Date</th>
+                            <th style="font-size: 0.9em; width: 110px;">Last Parsed</th>
+                            
                             <th style="text-align: center;">Report</th>
                             <th>Category</th>
                             <th style="text-align: center;">Actions</th>
@@ -151,13 +143,15 @@
                         <% if (locals.activeProjectsData && activeProjectsData.length > 0) { %>
                             <% activeProjectsData.forEach(project => { %>
                                 <%
-                                    let scoreColor = '#28a745'; // Green
+                                    let scoreColor = '#28a745'; 
+                                    let textColor = 'white';
                                     if (project.success && typeof project.scoreValue === 'number') {
-                                        if (project.scoreValue < 80) scoreColor = '#D32F2F'; // Red (Critical)
-                                        else if (project.scoreValue < 90) scoreColor = '#FBC02D'; // Yellow/Gold
+                                        if (project.scoreValue < 80) scoreColor = '#D32F2F'; 
+                                        else if (project.scoreValue < 90) { 
+                                            scoreColor = '#FBC02D'; 
+                                            textColor = '#333';
+                                        }
                                     }
-                                    // Чорний текст для жовтого фону, білий для інших
-                                    let textColor = (project.scoreValue >= 80 && project.scoreValue < 90) ? '#333' : 'white';
                                 %>
                                 <tr>
                                     <td>
@@ -201,8 +195,8 @@
                                         <% } %>
                                     </td>
 
-                                    <td class="small text-muted">
-                                        <%= project.scanDate %>
+                                    <td class="small text-muted" style="font-family: monospace;">
+                                        <%= project.lastParsed %>
                                     </td>
 
                                     <td style="text-align: center;">
@@ -269,7 +263,7 @@
                                     All Projects (Grand Total)
                                 </td>
                                 <td style="text-align: center; font-weight: 800; font-size: 1.2em; color: var(--purina-red);">
-                                    <%= locals.grandTotalAverage %>%
+                                    <%= locals.grandTotalAverage %>
                                 </td>
                             </tr>
                         </tbody>

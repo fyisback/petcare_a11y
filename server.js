@@ -3,6 +3,9 @@ const express = require('express');
 const path = require('path');
 const db = require('./services/db'); // Ініціалізує БД при запуску
 
+// Підключаємо планувальник (авто-сканування о 12:00)
+require('./services/scheduler'); 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -20,13 +23,12 @@ app.use('/', require('./routes/dashboard'));
 app.use('/admin', require('./routes/admin'));
 app.use('/weekly', require('./routes/weekly'));
 
-// 🔥 ДОДАЙ ЦЕЙ РЯДОК (це підключить файл routes/project.js)
+// 🔥 Маршрут для історії (Project History)
 app.use('/project', require('./routes/project')); 
 
 // 404 Handler
 app.use((req, res) => {
-    // Якщо у тебе є файл views/404.ejs, то все ок. 
-    // Якщо немає - заміни на res.status(404).send('Page not found');
+    // Рендеримо 404.ejs (якщо файлу немає, створи його або використовуй res.status(404).send('Not Found'))
     res.status(404).render('404');
 });
 
