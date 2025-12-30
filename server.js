@@ -20,8 +20,13 @@ app.use('/', require('./routes/dashboard'));
 app.use('/admin', require('./routes/admin'));
 app.use('/weekly', require('./routes/weekly'));
 
+// 🔥 ДОДАЙ ЦЕЙ РЯДОК (це підключить файл routes/project.js)
+app.use('/project', require('./routes/project')); 
+
 // 404 Handler
 app.use((req, res) => {
+    // Якщо у тебе є файл views/404.ejs, то все ок. 
+    // Якщо немає - заміни на res.status(404).send('Page not found');
     res.status(404).render('404');
 });
 
