@@ -11,20 +11,20 @@
         </form>
     </div>
 
-    <% if (error === 'RefreshFailed') { %>
+    <% if (typeof error !== 'undefined' && error === 'RefreshFailed') { %>
         <div class="alert alert-danger">
-            Failed to refresh data. Please check logs.
+            Failed to refresh data. Please check server logs.
         </div>
     <% } %>
 
-    <% if (averageScores && averageScores.length > 0) { %>
+    <% if (locals.averageScores && averageScores.length > 0) { %>
         <div class="row mb-4">
             <% averageScores.forEach(item => { %>
                 <div class="col-md-3">
                     <div class="card text-white bg-info mb-3">
                         <div class="card-header"><%= item.category %></div>
                         <div class="card-body">
-                            <h5 class="card-title">Avg Score: <%= item.average %>%</h5>
+                            <h5 class="card-title">Avg: <%= item.average %>%</h5>
                         </div>
                     </div>
                 </div>
@@ -57,7 +57,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% if (activeProjectsData.length > 0) { %>
+                        <% if (locals.activeProjectsData && activeProjectsData.length > 0) { %>
                             <% activeProjectsData.forEach(project => { %>
                                 <%
                                     let cellStyle = '';
@@ -69,49 +69,25 @@
                                 %>
                                 <tr>
                                     <td>
-                                        <strong><%= project.custom_title || project.project_url %></strong>
-                                        <br>
-                                        <a href="<%= project.project_url %>" target="_blank" class="small text-primary">
-                                            <i class="fas fa-external-link-alt"></i> Open Site
-                                        </a>
+                                        <strong><%= project.custom_title || project.project_url %></strong><br>
+                                        <a href="<%= project.project_url %>" target="_blank" class="small text-primary">Open Site</a>
                                     </td>
-
+                                    
                                     <td style="<%= cellStyle %>; text-align: center; font-weight: bold; vertical-align: middle;">
                                         <%= project.score %>
                                     </td>
 
-                                    <td style="text-align: center; font-weight: bold; vertical-align: middle;">
-                                        <%= project.total %>
-                                    </td>
+                                    <td style="text-align: center; font-weight: bold; vertical-align: middle;"><%= project.total %></td>
+                                    <td style="text-align: center; color: #dc3545; font-weight: bold; vertical-align: middle; background-color: #fff3f3;"><%= project.critical %></td>
+                                    <td style="text-align: center; color: #fd7e14; font-weight: bold; vertical-align: middle;"><%= project.serious %></td>
+                                    <td style="text-align: center; vertical-align: middle;"><%= project.moderate %></td>
 
-                                    <td style="text-align: center; color: #dc3545; font-weight: bold; vertical-align: middle; background-color: #fff3f3;">
-                                        <%= project.critical %>
-                                    </td>
-
-                                    <td style="text-align: center; color: #fd7e14; font-weight: bold; vertical-align: middle;">
-                                        <%= project.serious %>
-                                    </td>
-
-                                    <td style="text-align: center; vertical-align: middle;">
-                                        <%= project.moderate %>
-                                    </td>
-
-                                    <td class="small" style="vertical-align: middle;">
-                                        <%= project.scanDate %>
-                                    </td>
-
-                                    <td style="text-align: center; vertical-align: middle;">
-                                        <%- project.reportButton %>
-                                    </td>
-
+                                    <td class="small" style="vertical-align: middle;"><%= project.scanDate %></td>
+                                    <td style="text-align: center; vertical-align: middle;"><%- project.reportButton %></td>
                                     <td style="vertical-align: middle;"><%= project.category %></td>
-
                                     <td style="text-align: center; vertical-align: middle;">
-                                        <a href="/project/<%= project.id %>/score-history" class="btn btn-sm btn-info">
-                                            Details
-                                        </a>
+                                        <a href="/project/<%= project.id %>/score-history" class="btn btn-sm btn-info">Details</a>
                                     </td>
-
                                     <td style="vertical-align: middle;"><span class="badge badge-secondary"><%= project.status %></span></td>
                                 </tr>
                             <% }) %>
@@ -126,5 +102,32 @@
         </div>
     </div>
 
-    <% if (onHoldProjects && onHoldProjects.length > 0) { %>
+    <% if (locals.onHoldProjects && onHoldProjects.length > 0) { %>
         <h3 class="mt-5">On Hold Projects</h3>
+        <table class="table table-sm table-secondary">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Category</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% onHoldProjects.forEach(project => { %>
+                    <tr>
+                        <td><%= project.custom_title || project.project_url %></td>
+                        <td><%= project.category %></td>
+                        <td>
+                            <% if (project.report_url) { %>
+                                <a href="<%= project.report_url %>" target="_blank">Link</a>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+
+</div>
+
+<%- include('partials/footer') %>
