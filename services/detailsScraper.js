@@ -37,7 +37,7 @@ async function scrapeProjectDetails(projectUrl) {
 
         await page.goto(projectUrl, { waitUntil: 'networkidle2', timeout: 90000 });
 
-        // 1. Шукаємо лінк "Total"
+        // 1. Отримуємо scanRunID
         const totalLinkSelector = 'a[aria-describedby*="issue-count-total"]';
         try {
             await page.waitForSelector(totalLinkSelector, { timeout: 15000 });
@@ -55,12 +55,12 @@ async function scrapeProjectDetails(projectUrl) {
             return { issues: [], url: null };
         }
 
-        // 2. Формуємо URL (ВСІ статуси, не тільки Critical)
+        // 2. 🔥 URL ТІЛЬКИ ДЛЯ TOTAL (Severity 1, 2, 4)
+        // Ми прибрали "3" (Needs Review)
         const baseUrl = 'https://nestle-axemonitor.dequecloud.com/monitor/issues';
-        // status=open обов'язково. severity не передаємо, щоб показало всі, або передаємо 1,2,3,4
-        const targetUrl = `${baseUrl}?scanRun=${encodeURIComponent(scanRunID)}&severity=1,2,3,4&status=open`;
+        const targetUrl = `${baseUrl}?scanRun=${encodeURIComponent(scanRunID)}&severity=1,2,4&status=open`;
         
-        console.log(`[Scraper] ➡️ Issues URL: ${targetUrl}`);
+        console.log(`[Scraper] ➡️ Issues URL (Total Only): ${targetUrl}`);
         await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 90000 });
 
         // 3. Чекаємо список
@@ -69,11 +69,11 @@ async function scrapeProjectDetails(projectUrl) {
             await autoScroll(page); 
             await new Promise(r => setTimeout(r, 3000));
         } catch (e) {
-            console.warn(`[Scraper] ⚠️ List items not found.`);
+            console.warn(`[Scraper] ⚠️ List items not found (might be 0 issues).`);
             return { issues: [], url: targetUrl };
         }
 
-        // 4. Парсимо дані
+        // 4. Парсимо
         const issues = await page.evaluate(() => {
             const parseNumber = (str) => {
                 if (!str) return 0;
@@ -103,26 +103,23 @@ async function scrapeProjectDetails(projectUrl) {
                 let description = descEl ? descEl.innerText.trim() : 'Unknown Issue';
                 description = escapeHtml(description);
 
-                // 🔥 ВИЗНАЧЕННЯ SEVERITY (ВАЖЛИВОСТІ)
-                // Спочатку ставимо дефолт
-                let severity = 'Critical'; 
+                // Severity (Важливість)
+                let severity = 'Critical'; // Default
                 
-                // Спробуємо знайти в тексті рядка
-                // Зазвичай структура: Опис... Critical ... Pages: ...
-                // Шукаємо span з класом Offscreen (там найточніший текст)
+                // 1. Шукаємо в Offscreen (найточніше)
                 const offscreenSpan = item.querySelector('.Offscreen');
-                if (offscreenSpan && ['Critical', 'Serious', 'Moderate', 'Minor'].includes(offscreenSpan.innerText)) {
-                    severity = offscreenSpan.innerText;
+                if (offscreenSpan) {
+                    severity = offscreenSpan.innerText.trim();
                 } else {
-                    // Якщо немає Offscreen, скануємо весь текст рядка
+                    // 2. Якщо немає, шукаємо в тексті
                     const fullText = item.innerText;
-                    if (fullText.includes('Serious')) severity = 'Serious';
+                    if (fullText.includes('Critical')) severity = 'Critical';
+                    else if (fullText.includes('Serious')) severity = 'Serious';
                     else if (fullText.includes('Moderate')) severity = 'Moderate';
                     else if (fullText.includes('Minor')) severity = 'Minor';
-                    // Critical залишається дефолтним або якщо знайдено 'Critical'
                 }
 
-                // Pages count
+                // Кількість сторінок
                 const pagesLinkEl = item.querySelector('a.TagButton');
                 let pagesCount = 0;
                 let issueLink = null;
@@ -133,9 +130,8 @@ async function scrapeProjectDetails(projectUrl) {
                     pagesCount = parseNumber(text);
                 }
 
-                // Issues count
+                // Кількість помилок
                 let issuesCount = 0;
-                // Шукаємо елементи з текстом "Issues:"
                 const allElements = item.querySelectorAll('*');
                 for (let el of allElements) {
                     if (el.innerText && el.innerText.includes('Issues:')) {
@@ -153,7 +149,7 @@ async function scrapeProjectDetails(projectUrl) {
 
                 return {
                     description,
-                    severity: severity, // 🔥 Передаємо знайдене значення
+                    severity,
                     pages_count: pagesCount,
                     issues_count: issuesCount,
                     issue_link: issueLink
@@ -161,10 +157,8 @@ async function scrapeProjectDetails(projectUrl) {
             });
         });
 
-        // Фільтруємо пусті
         const validIssues = issues.filter(i => i.issues_count > 0 || i.pages_count > 0);
-
-        console.log(`[Scraper] ✅ Found ${validIssues.length} valid issues.`);
+        console.log(`[Scraper] ✅ Found ${validIssues.length} valid issues (Total Only).`);
         return { issues: validIssues, url: targetUrl };
 
     } catch (error) {

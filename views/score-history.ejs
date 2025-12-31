@@ -48,6 +48,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        margin-bottom:8px;
     }
 
     .btn-header-action {
@@ -74,7 +75,8 @@
         background-color: #333;
         color: white;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: white;
+        
     }
 
     .btn-share {
@@ -318,7 +320,7 @@
                         </svg>
                         Action Items
                     </span>
-                    <span class="badge badge-dark" style="background: var(--purina-dark); border-radius: 8px; padding: 6px 10px;"><%= tasks ? tasks.length : 0 %></span>
+                    <span class="badge badge-dark" style="background: var(--purina-dark); color:white; border-radius: 8px; padding: 6px 10px;"><%= tasks ? tasks.length : 0 %></span>
                 </div>
                 
                 <div class="modern-form-wrapper">

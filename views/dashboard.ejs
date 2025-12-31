@@ -72,13 +72,15 @@
     .table-responsive { 
         overflow-x: auto; 
         padding-bottom: 5px; 
+        -webkit-overflow-scrolling: touch; /* Плавний скрол на iOS */
     }
     
     .table-purina { 
         width: 100%; 
         border-collapse: separate; 
         border-spacing: 0; 
-        table-layout: fixed; /* 🔥 Фіксує колонки, запобігає розтягуванню */
+        /* За замовчуванням (Десктоп) - фіксована, щоб влізало в екран */
+        table-layout: fixed; 
     }
     
     .table-purina thead th {
@@ -86,6 +88,10 @@
         text-transform: uppercase; font-size: 0.7rem; padding: 12px 10px;
         border-bottom: 2px solid #eee; white-space: nowrap;
         overflow: hidden; text-overflow: ellipsis;
+        
+        /* Липкий хедер */
+        position: sticky; top: 0; z-index: 10;
+        box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
     }
     
     .th-sortable { cursor: pointer; user-select: none; }
@@ -95,7 +101,7 @@
     .table-purina tbody td {
         padding: 12px 10px; vertical-align: middle;
         border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; color: #333;
-        word-wrap: break-word; overflow-wrap: break-word; /* 🔥 Перенос тексту */
+        word-wrap: break-word; overflow-wrap: break-word;
     }
     .table-purina tbody tr:hover { background-color: #fafafa; }
 
@@ -147,7 +153,7 @@
     .details-row { background-color: #fbfbfb !important; }
     .details-wrapper { 
         display: none; 
-        padding: 0; /* 🔥 Прибрано зайві відступи */
+        padding: 0; 
         width: 100%; 
         background-color: #fff;
         box-shadow: inset 0 4px 6px -4px rgba(0,0,0,0.1); 
@@ -155,7 +161,7 @@
     
     .details-table-inner { 
         width: 100%; border: 1px solid #eee; border-radius: 8px; overflow: hidden; background: white;
-        table-layout: fixed; /* Фіксуємо ширину внутрішньої таблиці */
+        table-layout: fixed; 
     }
     .details-table-inner th { background: #eee; color: #555; padding: 10px 15px; font-size: 0.8rem; text-transform: uppercase; }
     .details-table-inner td { 
@@ -164,31 +170,42 @@
     }
     
     /* 🔥 БЕЙДЖІ ВАЖЛИВОСТІ (SEVERITY BADGES) */
-    .badge-critical-small { 
-        background-color: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; 
-        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffcdd2; 
-    }
-    .badge-serious-small { 
-        background-color: #fff3e0; color: #ef6c00; padding: 3px 8px; border-radius: 4px; 
-        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffe0b2; 
-    }
-    .badge-moderate-small { 
-        background-color: #e3f2fd; color: #1565c0; padding: 3px 8px; border-radius: 4px; 
-        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #bbdefb; 
-    }
-    .badge-minor-small { 
-        background-color: #f5f5f5; color: #616161; padding: 3px 8px; border-radius: 4px; 
-        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #e0e0e0; 
-    }
+    .badge-critical-small { background-color: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffcdd2; }
+    .badge-serious-small { background-color: #fff3e0; color: #ef6c00; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffe0b2; }
+    .badge-moderate-small { background-color: #e3f2fd; color: #1565c0; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #bbdefb; }
+    .badge-minor-small { background-color: #f5f5f5; color: #616161; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #e0e0e0; }
     .badge-secondary { background: #eee; color: #555; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; }
 
-    /* Стиль для HTML тегів у назві */
-    .issue-code {
-        background-color: #f3f3f3; color: #d63384; padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em;
-    }
+    .issue-code { background-color: #f3f3f3; color: #d63384; padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
 
     .stats-table td, .stats-table th { padding: 12px 15px; }
     .stats-total-row { background-color: #fff5f5; border-top: 2px solid var(--purina-red); }
+
+    /* 🔥🔥 MEDIA QUERY ДЛЯ МОБІЛЬНИХ (ДО 992px) 🔥🔥 */
+    @media (max-width: 992px) {
+        .table-purina, .details-table-inner {
+            /* Відключаємо фіксовану ширину, щоб текст не стискався */
+            table-layout: auto !important;
+            /* Примусово розширюємо таблицю, щоб з'явився горизонтальний скрол */
+            min-width: 1000px; 
+        }
+        
+        /* Додатково для зручності на мобільних */
+        .card-header-purina {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .card-header-purina div:first-child {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        #projectSearch {
+            width: 100% !important; /* Пошук на всю ширину */
+        }
+    }
 </style>
 
 <div class="container-fluid mt-4 mb-5 px-4">
@@ -205,7 +222,7 @@
             </p>
         </div>
         
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center" style="margin-bottom:8px;">
             <a href="/export" class="btn-action-header btn-dark-purina btn-mr">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
@@ -232,11 +249,23 @@
 
     <div class="card-purina">
         <div class="card-header-purina">
-            <span>Active Projects Monitor</span>
-            <span class="badge" style="background: var(--purina-dark); color: white; padding: 6px 10px; border-radius: 8px;">
-                <%= locals.activeProjectsData ? activeProjectsData.length : 0 %> Projects
-            </span>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span>Active Projects Monitor</span>
+                <span class="badge" style="background: var(--purina-dark); color: white; padding: 6px 10px; border-radius: 8px;">
+                    <%= locals.activeProjectsData ? activeProjectsData.length : 0 %> Projects
+                </span>
+            </div>
+            
+            <div style="position: relative;">
+                <input type="text" id="projectSearch" placeholder="Find project..." 
+                       style="padding: 6px 12px 6px 30px; border-radius: 20px; border: 1px solid #ddd; font-size: 0.85rem; width: 220px; outline: none; transition: all 0.2s;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#999" viewBox="0 0 16 16" 
+                     style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%);">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+            </div>
         </div>
+
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table id="projects-table" class="table-purina">
@@ -467,28 +496,47 @@
     const detailsCache = {};
     let currentSortDir = 1;
 
-    // 🔥 ФУНКЦІЯ: Форматування тегів та декодування
     function formatDescription(text) {
         if (!text) return '';
-
-        // Декодуємо (наприклад &lt; -> <)
         const txt = document.createElement("textarea");
         txt.innerHTML = text;
         let decoded = txt.value; 
-
-        // Екрануємо назад все, щоб було безпечно
         let safeText = decoded
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-
-        // Знаходимо теги типу &lt;html&gt; і підсвічуємо як код
         return safeText.replace(/(&lt;[^&]+&gt;)/g, function(match) {
             return `<code class="issue-code">${match}</code>`;
         });
     }
+
+    // 🔥 ДОДАНО ПОШУК (JS)
+    document.getElementById('projectSearch').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#projects-table-body tr.project-row');
+
+        rows.forEach(row => {
+            const title = row.querySelector('.project-title-link').innerText.toLowerCase();
+            const url = row.querySelector('.project-ext-link').innerText.toLowerCase();
+            const text = title + " " + url;
+            
+            const btn = row.querySelector('.btn-details');
+            let detailsRow = null;
+            if (btn) {
+                const idMatch = btn.getAttribute('onclick').match(/'([^']+)'/);
+                if (idMatch) detailsRow = document.getElementById(`details-row-${idMatch[1]}`);
+            }
+
+            if (text.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+                if (detailsRow) detailsRow.style.display = 'none';
+            }
+        });
+    });
 
     async function toggleDetails(projectId) {
         const row = document.getElementById(`details-row-${projectId}`);
@@ -532,7 +580,6 @@
             return;
         }
 
-        // Helper для класів
         const getSeverityClass = (sev) => {
             const s = (sev || '').toLowerCase();
             if (s.includes('critical')) return 'badge-critical-small';
