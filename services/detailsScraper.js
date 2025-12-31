@@ -55,9 +55,10 @@ async function scrapeProjectDetails(projectUrl) {
             return { issues: [], url: null };
         }
 
-        // 2. Формуємо URL
+        // 2. Формуємо URL (ВСІ статуси, не тільки Critical)
         const baseUrl = 'https://nestle-axemonitor.dequecloud.com/monitor/issues';
-        const targetUrl = `${baseUrl}?scanRun=${encodeURIComponent(scanRunID)}&severity=1,2,4&status=open`;
+        // status=open обов'язково. severity не передаємо, щоб показало всі, або передаємо 1,2,3,4
+        const targetUrl = `${baseUrl}?scanRun=${encodeURIComponent(scanRunID)}&severity=1,2,3,4&status=open`;
         
         console.log(`[Scraper] ➡️ Issues URL: ${targetUrl}`);
         await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 90000 });
@@ -72,7 +73,7 @@ async function scrapeProjectDetails(projectUrl) {
             return { issues: [], url: targetUrl };
         }
 
-        // 4. Парсимо (з екрануванням HTML)
+        // 4. Парсимо дані
         const issues = await page.evaluate(() => {
             const parseNumber = (str) => {
                 if (!str) return 0;
@@ -84,7 +85,6 @@ async function scrapeProjectDetails(projectUrl) {
                 return Math.floor(parseFloat(text) * multiplier) || 0;
             };
 
-            // Функція екранування (щоб <ul> не ламав таблицю)
             const escapeHtml = (text) => {
                 if (!text) return '';
                 return text
@@ -98,14 +98,31 @@ async function scrapeProjectDetails(projectUrl) {
             const items = document.querySelectorAll('div[role="listitem"]');
             
             return Array.from(items).map(item => {
-                // Шукаємо опис: спочатку по класу, потім по тегу label
+                // Опис
                 let descEl = item.querySelector('.Field__label') || item.querySelector('label');
                 let description = descEl ? descEl.innerText.trim() : 'Unknown Issue';
-                
-                // Екрануємо опис!
                 description = escapeHtml(description);
 
-                // Pages
+                // 🔥 ВИЗНАЧЕННЯ SEVERITY (ВАЖЛИВОСТІ)
+                // Спочатку ставимо дефолт
+                let severity = 'Critical'; 
+                
+                // Спробуємо знайти в тексті рядка
+                // Зазвичай структура: Опис... Critical ... Pages: ...
+                // Шукаємо span з класом Offscreen (там найточніший текст)
+                const offscreenSpan = item.querySelector('.Offscreen');
+                if (offscreenSpan && ['Critical', 'Serious', 'Moderate', 'Minor'].includes(offscreenSpan.innerText)) {
+                    severity = offscreenSpan.innerText;
+                } else {
+                    // Якщо немає Offscreen, скануємо весь текст рядка
+                    const fullText = item.innerText;
+                    if (fullText.includes('Serious')) severity = 'Serious';
+                    else if (fullText.includes('Moderate')) severity = 'Moderate';
+                    else if (fullText.includes('Minor')) severity = 'Minor';
+                    // Critical залишається дефолтним або якщо знайдено 'Critical'
+                }
+
+                // Pages count
                 const pagesLinkEl = item.querySelector('a.TagButton');
                 let pagesCount = 0;
                 let issueLink = null;
@@ -116,22 +133,19 @@ async function scrapeProjectDetails(projectUrl) {
                     pagesCount = parseNumber(text);
                 }
 
-                // Issues
-                // Шукаємо всі елементи з текстом "Issues:"
-                // (більш надійний пошук через XPath або перебір всіх елементів)
+                // Issues count
                 let issuesCount = 0;
+                // Шукаємо елементи з текстом "Issues:"
                 const allElements = item.querySelectorAll('*');
                 for (let el of allElements) {
                     if (el.innerText && el.innerText.includes('Issues:')) {
-                        // Знайшли блок з Issues, шукаємо цифру поруч
                         const numEl = el.querySelector('.weight--medium') || el.querySelector('button');
                         const rawVal = numEl ? numEl.innerText : el.innerText.replace(/Issues:/i, '');
                         issuesCount = parseNumber(rawVal);
-                        if (issuesCount > 0) break; // Знайшли - виходимо
+                        if (issuesCount > 0) break;
                     }
                 }
 
-                // Якщо опис Unknown, але є цифри - це дивно, спробуємо знайти будь-який текст заголовка
                 if (description === 'Unknown Issue') {
                     const heading = item.querySelector('[role="heading"]');
                     if (heading) description = escapeHtml(heading.innerText.trim());
@@ -139,7 +153,7 @@ async function scrapeProjectDetails(projectUrl) {
 
                 return {
                     description,
-                    severity: 'Critical',
+                    severity: severity, // 🔥 Передаємо знайдене значення
                     pages_count: pagesCount,
                     issues_count: issuesCount,
                     issue_link: issueLink
@@ -147,7 +161,7 @@ async function scrapeProjectDetails(projectUrl) {
             });
         });
 
-        // Фільтруємо "порожні" (Unknown Issue з 0 помилок)
+        // Фільтруємо пусті
         const validIssues = issues.filter(i => i.issues_count > 0 || i.pages_count > 0);
 
         console.log(`[Scraper] ✅ Found ${validIssues.length} valid issues.`);

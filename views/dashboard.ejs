@@ -14,7 +14,7 @@
         background-color: var(--purina-grey);
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         color: #333;
-        overflow-x: hidden; /* Прибираємо горизонтальний скрол всієї сторінки */
+        overflow-x: hidden; /* Прибираємо горизонтальний скрол сторінки */
     }
 
     /* --- КАРТКИ --- */
@@ -68,33 +68,24 @@
     .btn-red-purina { background-color: var(--purina-red); color: white; }
     .btn-red-purina:hover { background-color: #b3140d; transform: translateY(-2px); color: white; }
 
-    /* --- ТАБЛИЦЯ (ВИПРАВЛЕНИЙ ЛЕЙАУТ) --- */
-    .table-responsive {
-        overflow-x: auto;
-        /* Прибираємо зайві відступи, які можуть викликати скрол */
+    /* --- ТАБЛИЦЯ (Layout Fixes) --- */
+    .table-responsive { 
+        overflow-x: auto; 
         padding-bottom: 5px; 
     }
-
-    .table-purina {
-        width: 100%;
-        margin-bottom: 0;
-        border-collapse: separate;
-        border-spacing: 0;
-        /* 🔥 FIX: Фіксована розмітка таблиці запобігає розтягуванню */
-        table-layout: fixed; 
+    
+    .table-purina { 
+        width: 100%; 
+        border-collapse: separate; 
+        border-spacing: 0; 
+        table-layout: fixed; /* 🔥 Фіксує колонки, запобігає розтягуванню */
     }
     
     .table-purina thead th {
-        background-color: #f9f9f9; 
-        color: #666; 
-        font-weight: 700;
-        text-transform: uppercase; 
-        font-size: 0.7rem; /* Трохи зменшив шрифт заголовків */
-        padding: 12px 10px; /* Зменшив паддінги */
-        border-bottom: 2px solid #eee; 
-        white-space: nowrap; /* Заголовки в один рядок */
-        overflow: hidden;
-        text-overflow: ellipsis;
+        background-color: #f9f9f9; color: #666; font-weight: 700;
+        text-transform: uppercase; font-size: 0.7rem; padding: 12px 10px;
+        border-bottom: 2px solid #eee; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
     }
     
     .th-sortable { cursor: pointer; user-select: none; }
@@ -102,51 +93,29 @@
     .sort-icon { display: inline-block; margin-left: 5px; font-size: 0.8em; }
 
     .table-purina tbody td {
-        padding: 12px 10px; 
-        vertical-align: middle;
-        border-bottom: 1px solid #f0f0f0; 
-        font-size: 0.9rem; 
-        color: #333;
-        /* 🔥 FIX: Перенос слів, щоб не розпирало таблицю */
-        word-wrap: break-word;
-        overflow-wrap: break-word;
+        padding: 12px 10px; vertical-align: middle;
+        border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; color: #333;
+        word-wrap: break-word; overflow-wrap: break-word; /* 🔥 Перенос тексту */
     }
     .table-purina tbody tr:hover { background-color: #fafafa; }
 
     /* --- ЕЛЕМЕНТИ --- */
     .project-title-link { 
-        font-weight: 700; 
-        color: var(--purina-dark); 
-        display: block; 
-        margin-bottom: 4px; 
-        text-decoration: none; 
-        /* Обрізаємо занадто довгі назви */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-weight: 700; color: var(--purina-dark); display: block; margin-bottom: 4px; text-decoration: none; 
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
     }
-    
     .project-ext-link { 
-        font-size: 0.8rem; 
-        color: #888; 
-        display: inline-flex; 
-        align-items: center; 
-        gap: 4px; 
-        text-decoration: none;
-        /* 🔥 FIX: Довгі посилання переносяться */
-        word-break: break-all; 
-        line-height: 1.2;
+        font-size: 0.8rem; color: #888; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; 
+        word-break: break-all; line-height: 1.2; 
     }
     .project-ext-link:hover { color: #555; text-decoration: underline; }
 
     .score-badge {
         display: inline-flex; align-items: center; justify-content: center;
-        width: 40px; height: 30px; /* Трохи компактніше */
-        border-radius: 8px; font-weight: 800; font-size: 0.9rem;
+        width: 40px; height: 30px; border-radius: 8px; font-weight: 800; font-size: 0.9rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* Зменшені pill для економії місця */
     .issue-pill {
         display: inline-block; padding: 3px 8px; border-radius: 10px;
         font-weight: 700; font-size: 0.8rem; min-width: 25px; text-align: center;
@@ -163,12 +132,11 @@
     .btn-history {
         border: 1px solid #ddd; background: white; color: #555;
         border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 600;
-        text-decoration: none; transition: all 0.2s; display: inline-block;
-        white-space: nowrap;
+        text-decoration: none; transition: all 0.2s; display: inline-block; white-space: nowrap;
     }
     .btn-history:hover { border-color: #aaa; background: #f9f9f9; color: #333; text-decoration: none; }
 
-    /* 🔥 STYLES FOR DETAILS BUTTON & TABLE */
+    /* 🔥 DETAILS STYLES */
     .btn-details {
         border: 1px solid var(--purina-red); background: white; color: var(--purina-red);
         border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;
@@ -177,32 +145,48 @@
     .btn-details:hover, .btn-details.active { background: var(--purina-red); color: white; }
 
     .details-row { background-color: #fbfbfb !important; }
-    .details-wrapper { display: none; box-shadow: inset 0 4px 6px -4px rgba(0,0,0,0.1); width: 100%; }
+    .details-wrapper { 
+        display: none; 
+        padding: 0; /* 🔥 Прибрано зайві відступи */
+        width: 100%; 
+        background-color: #fff;
+        box-shadow: inset 0 4px 6px -4px rgba(0,0,0,0.1); 
+    }
     
     .details-table-inner { 
-        width: 100%; 
-        border: 1px solid #eee; 
-        border-radius: 8px; 
-        overflow: hidden; 
-        background: white;
-        table-layout: fixed; /* Фіксуємо внутрішню таблицю */
+        width: 100%; border: 1px solid #eee; border-radius: 8px; overflow: hidden; background: white;
+        table-layout: fixed; /* Фіксуємо ширину внутрішньої таблиці */
     }
     .details-table-inner th { background: #eee; color: #555; padding: 10px 15px; font-size: 0.8rem; text-transform: uppercase; }
     .details-table-inner td { 
-        padding: 10px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; color: #333; 
-        word-wrap: break-word; overflow-wrap: break-word;
+        padding: 10px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; color: #333;
+        word-wrap: break-word; overflow-wrap: break-word; white-space: normal; vertical-align: top;
     }
     
-    .badge-critical-small { background-color: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffcdd2; }
+    /* 🔥 БЕЙДЖІ ВАЖЛИВОСТІ (SEVERITY BADGES) */
+    .badge-critical-small { 
+        background-color: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; 
+        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffcdd2; 
+    }
+    .badge-serious-small { 
+        background-color: #fff3e0; color: #ef6c00; padding: 3px 8px; border-radius: 4px; 
+        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffe0b2; 
+    }
+    .badge-moderate-small { 
+        background-color: #e3f2fd; color: #1565c0; padding: 3px 8px; border-radius: 4px; 
+        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #bbdefb; 
+    }
+    .badge-minor-small { 
+        background-color: #f5f5f5; color: #616161; padding: 3px 8px; border-radius: 4px; 
+        font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #e0e0e0; 
+    }
+    .badge-secondary { background: #eee; color: #555; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; }
 
     /* Стиль для HTML тегів у назві */
     .issue-code {
-        background-color: #f3f3f3; color: #d63384;
-        padding: 2px 4px; border-radius: 4px;
-        font-family: monospace; font-size: 0.9em;
+        background-color: #f3f3f3; color: #d63384; padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.9em;
     }
 
-    /* Stats */
     .stats-table td, .stats-table th { padding: 12px 15px; }
     .stats-total-row { background-color: #fff5f5; border-top: 2px solid var(--purina-red); }
 </style>
@@ -483,21 +467,16 @@
     const detailsCache = {};
     let currentSortDir = 1;
 
-    // 🔥 ФУНКЦІЯ: Декодування та форматування тегів
+    // 🔥 ФУНКЦІЯ: Форматування тегів та декодування
     function formatDescription(text) {
         if (!text) return '';
 
-        // 1. Створюємо textarea для декодування HTML entities (наприклад &lt; -> <)
+        // Декодуємо (наприклад &lt; -> <)
         const txt = document.createElement("textarea");
         txt.innerHTML = text;
         let decoded = txt.value; 
 
-        // 2. Знаходимо теги типу <html>, <ul> і обгортаємо їх у <code class="issue-code">
-        // Але спочатку треба знову екранувати < і >, щоб вони не виконувались як HTML
-        // Тому ми робимо хитро: ми шукаємо патерни, обгортаємо їх, а решту тексту лишаємо безпечним
-        
-        // Найпростіший шлях для безпечного відображення з підсвіткою:
-        // Спочатку екрануємо ВСЕ назад
+        // Екрануємо назад все, щоб було безпечно
         let safeText = decoded
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
@@ -505,7 +484,7 @@
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
 
-        // Тепер знаходимо екрановані теги (&lt;tag&gt;) і додаємо їм клас
+        // Знаходимо теги типу &lt;html&gt; і підсвічуємо як код
         return safeText.replace(/(&lt;[^&]+&gt;)/g, function(match) {
             return `<code class="issue-code">${match}</code>`;
         });
@@ -553,6 +532,16 @@
             return;
         }
 
+        // Helper для класів
+        const getSeverityClass = (sev) => {
+            const s = (sev || '').toLowerCase();
+            if (s.includes('critical')) return 'badge-critical-small';
+            if (s.includes('serious')) return 'badge-serious-small';
+            if (s.includes('moderate')) return 'badge-moderate-small';
+            if (s.includes('minor')) return 'badge-minor-small';
+            return 'badge-secondary';
+        };
+
         let html = `
             <table class="details-table-inner">
                 <thead>
@@ -565,6 +554,7 @@
         `;
 
         issues.forEach(issue => {
+            const badgeClass = getSeverityClass(issue.severity);
             html += `
                 <tr>
                     <td style="font-weight: 500; font-size: 0.95rem;">
@@ -572,7 +562,7 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                            <span class="badge-critical-small">Critical</span>
+                            <span class="${badgeClass}">${issue.severity || 'Unknown'}</span>
                             
                             <span style="font-size: 0.85rem; color: #555; white-space: nowrap;">
                                 <strong>Pages:</strong> ${issue.pages_count || 0}
