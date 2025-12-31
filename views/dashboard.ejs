@@ -1,145 +1,282 @@
 <%- include('partials/header') %>
 
 <style>
-    /* Purina Brand Colors */
+    /* --- ОСНОВНІ КОЛЬОРИ --- */
     :root {
         --purina-red: #E2231A;
         --purina-dark: #1C1C1C;
         --purina-grey: #F4F4F4;
+        --soft-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        --radius-std: 12px;
     }
 
     body {
         background-color: var(--purina-grey);
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #333;
+        overflow-x: hidden; /* Прибираємо горизонтальний скрол всієї сторінки */
     }
 
-    /* Cards */
-    .card {
+    /* --- КАРТКИ --- */
+    .card-purina {
         border: none;
-        border-radius: 4px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        background-color: white;
-        border-top: 4px solid var(--purina-red);
+        border-radius: var(--radius-std);
+        background: white;
+        box-shadow: var(--soft-shadow);
+        margin-bottom: 24px;
+        overflow: hidden;
     }
 
-    .card-header {
-        background-color: white;
-        border-bottom: 1px solid #ddd;
-        font-weight: bold;
+    .card-header-purina {
+        background: white;
+        padding: 20px 24px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 800;
         color: var(--purina-dark);
         text-transform: uppercase;
+        font-size: 0.85rem;
         letter-spacing: 0.5px;
     }
 
-    /* Buttons */
-    .btn-purina {
-        background-color: var(--purina-red);
-        color: white;
-        border-radius: 0;
-        font-weight: bold;
-        text-transform: uppercase;
+    /* --- КНОПКИ (HEADER) --- */
+    .btn-action-header {
+        height: 42px;
+        border-radius: 30px;
+        padding: 0 24px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
         border: none;
-        padding: 8px 16px;
-    }
-    .btn-purina:hover {
-        background-color: #b3140d;
-        color: white;
+        text-decoration: none !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        line-height: 1;
+        cursor: pointer;
     }
 
-    /* Table Styling */
+    .btn-mr { margin-right: 12px; }
+
+    .btn-dark-purina { background-color: var(--purina-dark); color: white; }
+    .btn-dark-purina:hover { background-color: #333; transform: translateY(-2px); color: white; }
+
+    .btn-red-purina { background-color: var(--purina-red); color: white; }
+    .btn-red-purina:hover { background-color: #b3140d; transform: translateY(-2px); color: white; }
+
+    /* --- ТАБЛИЦЯ (ВИПРАВЛЕНИЙ ЛЕЙАУТ) --- */
+    .table-responsive {
+        overflow-x: auto;
+        /* Прибираємо зайві відступи, які можуть викликати скрол */
+        padding-bottom: 5px; 
+    }
+
+    .table-purina {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        /* 🔥 FIX: Фіксована розмітка таблиці запобігає розтягуванню */
+        table-layout: fixed; 
+    }
+    
     .table-purina thead th {
-        background-color: var(--purina-dark);
-        color: white;
-        border: none;
-        border-bottom: 4px solid var(--purina-red);
+        background-color: #f9f9f9; 
+        color: #666; 
+        font-weight: 700;
+        text-transform: uppercase; 
+        font-size: 0.7rem; /* Трохи зменшив шрифт заголовків */
+        padding: 12px 10px; /* Зменшив паддінги */
+        border-bottom: 2px solid #eee; 
+        white-space: nowrap; /* Заголовки в один рядок */
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .th-sortable { cursor: pointer; user-select: none; }
+    .th-sortable:hover { background-color: #eee; color: var(--purina-dark); }
+    .sort-icon { display: inline-block; margin-left: 5px; font-size: 0.8em; }
+
+    .table-purina tbody td {
+        padding: 12px 10px; 
         vertical-align: middle;
-        font-size: 0.95rem;
+        border-bottom: 1px solid #f0f0f0; 
+        font-size: 0.9rem; 
+        color: #333;
+        /* 🔥 FIX: Перенос слів, щоб не розпирало таблицю */
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
+    .table-purina tbody tr:hover { background-color: #fafafa; }
 
-    .table-purina tbody tr {
-        background-color: white;
-        transition: background 0.1s;
+    /* --- ЕЛЕМЕНТИ --- */
+    .project-title-link { 
+        font-weight: 700; 
+        color: var(--purina-dark); 
+        display: block; 
+        margin-bottom: 4px; 
+        text-decoration: none; 
+        /* Обрізаємо занадто довгі назви */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    .table-purina tbody tr:hover {
-        background-color: #fff5f5;
+    
+    .project-ext-link { 
+        font-size: 0.8rem; 
+        color: #888; 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 4px; 
+        text-decoration: none;
+        /* 🔥 FIX: Довгі посилання переносяться */
+        word-break: break-all; 
+        line-height: 1.2;
     }
+    .project-ext-link:hover { color: #555; text-decoration: underline; }
 
-    .table-purina td {
-        vertical-align: middle !important;
-        padding: 12px 10px;
-        color: #444;
-        font-size: 0.95rem;
-    }
-
-    /* Badges & Text */
     .score-badge {
-        display: inline-block;
-        min-width: 50px;
-        padding: 5px 8px;
-        border-radius: 4px;
-        color: white;
-        font-weight: bold;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 40px; height: 30px; /* Трохи компактніше */
+        border-radius: 8px; font-weight: 800; font-size: 0.9rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    a { color: var(--purina-red); text-decoration: none; }
-    a:hover { color: var(--purina-dark); text-decoration: underline; }
 
-    .text-critical { color: #D32F2F; font-weight: 800; }
-    .text-serious { color: #E65100; font-weight: 700; }
-    .text-moderate { color: #F57F17; font-weight: 600; }
+    /* Зменшені pill для економії місця */
+    .issue-pill {
+        display: inline-block; padding: 3px 8px; border-radius: 10px;
+        font-weight: 700; font-size: 0.8rem; min-width: 25px; text-align: center;
+    }
+    .pill-critical { background-color: #ffebee; color: #c62828; }
+    .pill-serious { background-color: #fff3e0; color: #ef6c00; }
+    .pill-moderate { background-color: #e3f2fd; color: #1565c0; }
+    .pill-zero { color: #ccc; }
+
+    .trend-up { color: #28a745; font-size: 0.75em; font-weight: 700; display: block; margin-top: 2px; }
+    .trend-down { color: #dc3545; font-size: 0.75em; font-weight: 700; display: block; margin-top: 2px; }
+    .trend-neutral { color: #aaa; font-size: 0.75em; display: block; margin-top: 2px; }
+
+    .btn-history {
+        border: 1px solid #ddd; background: white; color: #555;
+        border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 600;
+        text-decoration: none; transition: all 0.2s; display: inline-block;
+        white-space: nowrap;
+    }
+    .btn-history:hover { border-color: #aaa; background: #f9f9f9; color: #333; text-decoration: none; }
+
+    /* 🔥 STYLES FOR DETAILS BUTTON & TABLE */
+    .btn-details {
+        border: 1px solid var(--purina-red); background: white; color: var(--purina-red);
+        border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s; margin-top: 4px; display: inline-block; white-space: nowrap;
+    }
+    .btn-details:hover, .btn-details.active { background: var(--purina-red); color: white; }
+
+    .details-row { background-color: #fbfbfb !important; }
+    .details-wrapper { display: none; box-shadow: inset 0 4px 6px -4px rgba(0,0,0,0.1); width: 100%; }
+    
+    .details-table-inner { 
+        width: 100%; 
+        border: 1px solid #eee; 
+        border-radius: 8px; 
+        overflow: hidden; 
+        background: white;
+        table-layout: fixed; /* Фіксуємо внутрішню таблицю */
+    }
+    .details-table-inner th { background: #eee; color: #555; padding: 10px 15px; font-size: 0.8rem; text-transform: uppercase; }
+    .details-table-inner td { 
+        padding: 10px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; color: #333; 
+        word-wrap: break-word; overflow-wrap: break-word;
+    }
+    
+    .badge-critical-small { background-color: #ffebee; color: #c62828; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #ffcdd2; }
+
+    /* Стиль для HTML тегів у назві */
+    .issue-code {
+        background-color: #f3f3f3; color: #d63384;
+        padding: 2px 4px; border-radius: 4px;
+        font-family: monospace; font-size: 0.9em;
+    }
+
+    /* Stats */
+    .stats-table td, .stats-table th { padding: 12px 15px; }
+    .stats-total-row { background-color: #fff5f5; border-top: 2px solid var(--purina-red); }
 </style>
 
-<div class="container-fluid mt-4 mb-5">
+<div class="container-fluid mt-4 mb-5 px-4">
     
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid #e0e0e0;">
         <div>
-            <h1 class="h3 mb-0 text-gray-800">Accessibility Dashboard</h1>
-            <p class="text-muted mb-0 small" style="margin-top: 5px;">
-                <i class="far fa-clock"></i> System Updated: <strong><%= locals.lastSystemUpdate %> (Kyiv Time)</strong>
+            <h1 class="h3 mb-0" style="font-weight: 800; color: var(--purina-dark);">Accessibility Dashboard</h1>
+            <p class="text-muted mb-0 small" style="margin-top: 5px; display: flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                </svg>
+                System Updated: <strong><%= locals.lastSystemUpdate %> (Kyiv Time)</strong>
             </p>
         </div>
         
-        <form action="/refresh" method="POST" style="display: inline;">
-            <button type="submit" class="btn btn-purina shadow-sm">
-                <i class="fas fa-sync-alt"></i> Refresh All Data
-            </button>
-        </form>
+        <div class="d-flex align-items-center">
+            <a href="/export" class="btn-action-header btn-dark-purina btn-mr">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                </svg>
+                Download Report
+            </a>
+            <form action="/refresh" method="POST" style="margin: 0; display: inline-flex;">
+                <button type="submit" class="btn-action-header btn-red-purina">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                    Refresh All Data
+                </button>
+            </form>
+        </div>
     </div>
 
     <% if (typeof error !== 'undefined' && error === 'RefreshFailed') { %>
-        <div class="alert alert-danger shadow-sm border-left-danger">
+        <div class="alert alert-danger shadow-sm" style="border-radius: var(--radius-std);">
             <strong>Error:</strong> Failed to refresh data. Please check server logs.
         </div>
     <% } %>
 
-    <div class="card mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <div class="card-purina">
+        <div class="card-header-purina">
             <span>Active Projects Monitor</span>
-            <span class="badge badge-secondary" style="background:#ddd; color:#333;">
+            <span class="badge" style="background: var(--purina-dark); color: white; padding: 6px 10px; border-radius: 8px;">
                 <%= locals.activeProjectsData ? activeProjectsData.length : 0 %> Projects
             </span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="projects-table" class="table table-purina mb-0">
+                <table id="projects-table" class="table-purina">
                     <thead>
                         <tr>
                             <th style="width: 22%;">Project Name / URL</th>
-                            <th style="text-align: center; width: 80px;">Score</th>
+                            <th class="th-sortable" onclick="sortProjectsByScore()" style="text-align: center; width: 7%;">
+                                Score <span id="sort-icon" class="sort-icon">▼</span>
+                            </th>
+                            <th style="text-align: center; width: 6%;">Total</th>
+                            <th style="text-align: center; width: 5%;">Crit</th>
+                            <th style="text-align: center; width: 5%;">Ser</th>
+                            <th style="text-align: center; width: 5%;">Mod</th>
                             
-                            <th style="text-align: center;" title="Total Issues">Total</th>
-                            <th style="text-align: center;" title="Critical Issues">Crit</th>
-                            <th style="text-align: center;" title="Serious Issues">Ser</th>
-                            <th style="text-align: center;" title="Moderate Issues">Mod</th>
-                            
-                            <th style="font-size: 0.9em; width: 110px;">Last Parsed</th>
-                            
-                            <th style="text-align: center;">Report</th>
-                            <th>Category</th>
-                            <th style="text-align: center;">Actions</th>
-                            <th>Status</th>
+                            <th style="text-align: center; width: 5%;" title="Full Issues List">List</th>
+
+                            <th style="width: 10%;">Scan Date</th>
+                            <th style="text-align: center; width: 8%;">Report</th>
+                            <th style="width: 10%;">Category</th>
+                            <th style="text-align: center; width: 9%;">Actions</th>
+                            <th style="width: 8%;">Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="projects-table-body">
                         <% if (locals.activeProjectsData && activeProjectsData.length > 0) { %>
                             <% activeProjectsData.forEach(project => { %>
                                 <%
@@ -153,78 +290,121 @@
                                         }
                                     }
                                 %>
-                                <tr>
+                                <tr class="project-row">
                                     <td>
-                                        <div style="font-weight: 700; font-size: 1.05em;"><%= project.custom_title || project.project_url %></div>
-                                        <a href="<%= project.project_url %>" target="_blank" style="font-size: 0.85em; color: #666;">
-                                            <i class="fas fa-external-link-alt"></i> Open Website
+                                        <div class="project-title-link">
+                                            <%= project.custom_title || project.project_url %>
+                                        </div>
+                                        <a href="<%= project.project_url %>" target="_blank" class="project-ext-link">
+                                            <%= project.project_url %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                                                <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                                            </svg>
                                         </a>
                                     </td>
                                     
                                     <td style="text-align: center;">
-                                        <div class="score-badge shadow-sm" style="background-color: <%= scoreColor %>; color: <%= textColor %>;">
+                                        <div class="score-badge" style="background-color: <%= scoreColor %>; color: <%= textColor %>;">
                                             <%= project.score %>
                                         </div>
+                                        <% if (project.hasHistory) { %>
+                                            <div style="font-size: 0.7rem; margin-top: 2px;">
+                                                <% if (project.scoreTrend > 0) { %>
+                                                    <span class="trend-up">▲ +<%= project.scoreTrend %></span>
+                                                <% } else if (project.scoreTrend < 0) { %>
+                                                    <span class="trend-down">▼ <%= project.scoreTrend %></span>
+                                                <% } else { %>
+                                                    <span class="trend-neutral">-</span>
+                                                <% } %>
+                                            </div>
+                                        <% } %>
                                     </td>
 
                                     <td style="text-align: center; font-weight: bold; color: #555;">
                                         <%= project.total %>
                                     </td>
 
-                                    <td style="text-align: center; background-color: #fff0f0;">
+                                    <td style="text-align: center;">
                                         <% if (project.critical > 0) { %>
-                                            <span class="text-critical"><%= project.critical %></span>
+                                            <span class="issue-pill pill-critical"><%= project.critical %></span>
                                         <% } else { %>
-                                            <span style="color: #ccc;">0</span>
+                                            <span class="issue-pill pill-zero">0</span>
                                         <% } %>
                                     </td>
 
                                     <td style="text-align: center;">
                                         <% if (project.serious > 0) { %>
-                                            <span class="text-serious"><%= project.serious %></span>
+                                            <span class="issue-pill pill-serious"><%= project.serious %></span>
                                         <% } else { %>
-                                            <span style="color: #ccc;">0</span>
+                                            <span class="issue-pill pill-zero">0</span>
                                         <% } %>
                                     </td>
 
                                     <td style="text-align: center;">
                                         <% if (project.moderate > 0) { %>
-                                            <span class="text-moderate"><%= project.moderate %></span>
+                                            <span class="issue-pill pill-moderate"><%= project.moderate %></span>
                                         <% } else { %>
-                                            <span style="color: #ccc;">0</span>
+                                            <span class="issue-pill pill-zero">0</span>
                                         <% } %>
                                     </td>
 
-                                    <td class="small text-muted" style="font-family: monospace;">
-                                        <%= project.lastParsed %>
+                                    <td style="text-align: center;">
+                                        <% if (project.issuesListUrl) { %>
+                                            <a href="<%= project.issuesListUrl %>" target="_blank" class="btn btn-sm btn-light border" title="Open full issues list" style="padding: 2px 6px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#E2231A" viewBox="0 0 16 16">
+                                                    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                                                </svg>
+                                            </a>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">-</span>
+                                        <% } %>
+                                    </td>
+
+                                    <td style="font-size: 0.85rem; color: #777;">
+                                        <%= project.scanDate %>
                                     </td>
 
                                     <td style="text-align: center;">
                                         <%- project.reportButton %>
                                     </td>
 
-                                    <td><span style="font-weight: 500;"><%= project.category %></span></td>
+                                    <td>
+                                        <span class="badge" style="background: #f0f0f0; color: #555; font-weight: 500; border: 1px solid #ddd;">
+                                            <%= project.category %>
+                                        </span>
+                                    </td>
 
                                     <td style="text-align: center;">
-                                        <a href="/project/<%= project.id %>/score-history" class="btn btn-sm btn-outline-secondary" style="border-radius: 20px; font-size: 0.8rem; padding: 2px 10px;">
+                                        <a href="/project/<%= project.id %>/score-history" class="btn-history mb-1">
                                             History
                                         </a>
+                                        <br>
+                                        <button class="btn-details" onclick="toggleDetails('<%= project.id %>')" id="btn-details-<%= project.id %>">
+                                            Details ▼
+                                        </button>
                                     </td>
 
                                     <td>
-                                        <span class="badge badge-light" style="border: 1px solid #ddd; color: #555;">
+                                        <span class="badge" style="background: transparent; border: 1px solid #ddd; color: #777; font-weight: normal;">
                                             <%= project.status %>
                                         </span>
                                     </td>
                                 </tr>
+
+                                <tr id="details-row-<%= project.id %>" class="details-row" style="display: none;">
+                                    <td colspan="12" style="padding: 0; border: none;">
+                                        <div id="details-content-<%= project.id %>" class="details-wrapper">
+                                            <div class="text-center text-muted p-3">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading issues...
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
                             <% }) %>
                         <% } else { %>
-                            <tr>
-                                <td colspan="11" class="text-center py-5">
-                                    <h4 class="text-muted">No active projects found</h4>
-                                    <p>Please click "Refresh All Data" to start a scan.</p>
-                                </td>
-                            </tr>
+                            <tr><td colspan="12" class="text-center py-5">No projects found.</td></tr>
                         <% } %>
                     </tbody>
                 </table>
@@ -233,14 +413,14 @@
     </div>
 
     <div class="row">
-        <div class="col-md-5">
-            <div class="card shadow-sm">
-                <div class="card-header" style="background-color: var(--purina-dark); color: white; border-bottom: none;">
+        <div class="col-md-5 mb-4">
+            <div class="card-purina h-100">
+                <div class="card-header-purina" style="background-color: var(--purina-dark); color: white;">
                     Statistics Summary
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-bordered mb-0">
-                        <thead class="thead-light">
+                    <table class="table-purina stats-table mb-0">
+                        <thead>
                             <tr>
                                 <th>Group / Category</th>
                                 <th style="text-align: center;">Average Score</th>
@@ -257,11 +437,8 @@
                                     </tr>
                                 <% }) %>
                             <% } %>
-                            
-                            <tr style="background-color: #fff0f0; border-top: 2px solid var(--purina-red);">
-                                <td style="font-weight: bold; color: var(--purina-red); text-transform: uppercase;">
-                                    All Projects (Grand Total)
-                                </td>
+                            <tr class="stats-total-row">
+                                <td style="font-weight: 800; color: var(--purina-red); text-transform: uppercase;">All Projects</td>
                                 <td style="text-align: center; font-weight: 800; font-size: 1.2em; color: var(--purina-red);">
                                     <%= locals.grandTotalAverage %>
                                 </td>
@@ -272,20 +449,22 @@
             </div>
         </div>
         
-        <div class="col-md-7">
+        <div class="col-md-7 mb-4">
             <% if (locals.onHoldProjects && onHoldProjects.length > 0) { %>
-                <div class="card shadow-sm h-100" style="border-top: 4px solid #777;">
-                    <div class="card-header">On Hold / Archived</div>
+                <div class="card-purina h-100" style="border-top: 4px solid #999;">
+                    <div class="card-header-purina">On Hold / Archived</div>
                     <div class="card-body p-0">
-                        <table class="table table-sm table-hover mb-0">
+                        <table class="table-purina mb-0">
                             <tbody>
                                 <% onHoldProjects.forEach(project => { %>
                                     <tr>
-                                        <td class="pl-4"><%= project.custom_title || project.project_url %></td>
-                                        <td><span class="badge badge-light"><%= project.category %></span></td>
-                                        <td class="text-right pr-4">
+                                        <td style="padding-left: 24px; color: #777;">
+                                            <%= project.custom_title || project.project_url %>
+                                        </td>
+                                        <td><span class="badge" style="background:#f4f4f4; color:#666; border:1px solid #eee;"><%= project.category %></span></td>
+                                        <td style="text-align: right; padding-right: 24px;">
                                             <% if (project.report_url) { %>
-                                                <a href="<%= project.report_url %>" target="_blank" class="text-muted"><small>Report</small></a>
+                                                <a href="<%= project.report_url %>" target="_blank" class="btn-history">View Report</a>
                                             <% } %>
                                         </td>
                                     </tr>
@@ -298,5 +477,159 @@
         </div>
     </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const detailsCache = {};
+    let currentSortDir = 1;
+
+    // 🔥 ФУНКЦІЯ: Декодування та форматування тегів
+    function formatDescription(text) {
+        if (!text) return '';
+
+        // 1. Створюємо textarea для декодування HTML entities (наприклад &lt; -> <)
+        const txt = document.createElement("textarea");
+        txt.innerHTML = text;
+        let decoded = txt.value; 
+
+        // 2. Знаходимо теги типу <html>, <ul> і обгортаємо їх у <code class="issue-code">
+        // Але спочатку треба знову екранувати < і >, щоб вони не виконувались як HTML
+        // Тому ми робимо хитро: ми шукаємо патерни, обгортаємо їх, а решту тексту лишаємо безпечним
+        
+        // Найпростіший шлях для безпечного відображення з підсвіткою:
+        // Спочатку екрануємо ВСЕ назад
+        let safeText = decoded
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+        // Тепер знаходимо екрановані теги (&lt;tag&gt;) і додаємо їм клас
+        return safeText.replace(/(&lt;[^&]+&gt;)/g, function(match) {
+            return `<code class="issue-code">${match}</code>`;
+        });
+    }
+
+    async function toggleDetails(projectId) {
+        const row = document.getElementById(`details-row-${projectId}`);
+        const contentDiv = document.getElementById(`details-content-${projectId}`);
+        const btn = document.getElementById(`btn-details-${projectId}`);
+
+        if (row.style.display === 'none') {
+            row.style.display = 'table-row';
+            $(contentDiv).slideDown(300);
+            btn.innerHTML = 'Details ▲';
+            btn.classList.add('active');
+
+            if (!detailsCache[projectId]) {
+                try {
+                    const response = await fetch(`/project/${projectId}/details?t=${Date.now()}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        detailsCache[projectId] = data.issues;
+                        renderDetailsTable(projectId, data.issues);
+                    } else {
+                        contentDiv.innerHTML = `<div class="p-3 text-danger">Server Error: ${data.error}</div>`;
+                    }
+                } catch (err) {
+                    contentDiv.innerHTML = `<div class="p-3 text-danger">Connection error.</div>`;
+                }
+            }
+        } else {
+            $(contentDiv).slideUp(300, function() {
+                row.style.display = 'none';
+            });
+            btn.innerHTML = 'Details ▼';
+            btn.classList.remove('active');
+        }
+    }
+
+    function renderDetailsTable(id, issues) {
+        const container = document.getElementById(`details-content-${id}`);
+        if (!issues || issues.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted p-3">No active open issues found.</div>';
+            return;
+        }
+
+        let html = `
+            <table class="details-table-inner">
+                <thead>
+                    <tr>
+                        <th style="width: 65%">Issue Description</th>
+                        <th style="width: 35%">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        issues.forEach(issue => {
+            html += `
+                <tr>
+                    <td style="font-weight: 500; font-size: 0.95rem;">
+                        ${formatDescription(issue.description)}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <span class="badge-critical-small">Critical</span>
+                            
+                            <span style="font-size: 0.85rem; color: #555; white-space: nowrap;">
+                                <strong>Pages:</strong> ${issue.pages_count || 0}
+                            </span>
+                            
+                            <span style="font-size: 0.85rem; color: #555; white-space: nowrap;">
+                                <strong>Issues:</strong> ${issue.issues_count || 0}
+                            </span>
+
+                            ${issue.issue_link ? `
+                                <a href="${issue.issue_link}" target="_blank" style="margin-left: auto; color: #E2231A; text-decoration: none; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                                    View Fix
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-left: 2px;">
+                                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                                    </svg>
+                                </a>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    function sortProjectsByScore() {
+        const tbody = document.getElementById('projects-table-body');
+        const rows = Array.from(tbody.querySelectorAll('tr.project-row'));
+        const sortIcon = document.getElementById('sort-icon');
+
+        if(rows.length === 0) return;
+
+        rows.sort((a, b) => {
+            const scoreA = parseInt(a.querySelector('.score-badge').innerText.trim()) || 0;
+            const scoreB = parseInt(b.querySelector('.score-badge').innerText.trim()) || 0;
+            return (scoreB - scoreA) * currentSortDir;
+        });
+
+        rows.forEach(row => {
+            const btn = row.querySelector('.btn-details');
+            if(btn) {
+                const idMatch = btn.getAttribute('onclick').match(/'([^']+)'/);
+                if(idMatch) {
+                    const id = idMatch[1];
+                    const detailsRow = document.getElementById(`details-row-${id}`);
+                    tbody.appendChild(row);
+                    if(detailsRow) tbody.appendChild(detailsRow); 
+                }
+            }
+        });
+
+        sortIcon.innerText = currentSortDir === 1 ? '▼' : '▲';
+        currentSortDir *= -1;
+    }
+</script>
 
 <%- include('partials/footer') %>

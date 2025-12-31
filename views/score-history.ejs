@@ -2,11 +2,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    /* Стилі Purina */
+    /* --- ОСНОВНІ КОЛЬОРИ --- */
     :root {
         --purina-red: #E2231A;
+        --purina-red-dark: #b3140d;
         --purina-dark: #1C1C1C;
         --purina-grey: #F4F4F4;
+        --soft-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        --input-bg: #f9f9f9;
+        --radius-std: 12px;
+        --height-std: 54px; /* 🔥 Збільшена висота полів */
     }
 
     body {
@@ -14,102 +19,413 @@
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Картка Purina */
+    /* --- КАРТКИ --- */
     .card-purina {
         border: none;
-        border-top: 4px solid var(--purina-red);
+        border-radius: var(--radius-std);
         background: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
+        box-shadow: var(--soft-shadow);
+        margin-bottom: 24px;
+        overflow: hidden;
     }
 
     .card-header {
-        background-color: white;
+        background: white;
         color: var(--purina-dark);
-        font-weight: 700;
+        font-weight: 800;
         text-transform: uppercase;
-        border-bottom: 1px solid #eee;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    /* Кнопка Назад */
+    /* --- HEADER ACTIONS --- */
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-header-action {
+        height: 42px;
+        min-width: 120px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 21px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.2s ease-in-out;
+        padding: 0 20px;
+        text-decoration: none !important;
+        border: 2px solid transparent;
+        box-sizing: border-box;
+    }
+
     .btn-back {
         background-color: var(--purina-dark);
         color: white;
-        border-radius: 0;
-        padding: 8px 20px;
-        font-weight: bold;
-        transition: 0.2s;
     }
     .btn-back:hover {
         background-color: #333;
         color: white;
-        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    /* Стилізація таблиці */
+    .btn-share {
+        background-color: white;
+        color: var(--purina-dark);
+        border-color: #e0e0e0;
+    }
+    .btn-share:hover {
+        background-color: #fff;
+        border-color: var(--purina-dark);
+        color: var(--purina-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    /* --- ФОРМА --- */
+    .modern-form-wrapper {
+        background: white;
+        padding: 24px;
+        border-bottom: 1px solid #f5f5f5;
+    }
+
+    .form-spacer {
+        margin-bottom: 24px; /* 🔥 Більше повітря між полями */
+    }
+
+    .modern-input {
+        background-color: var(--input-bg);
+        border: 1px solid #eee;
+        border-radius: var(--radius-std);
+        height: var(--height-std); /* Використовуємо збільшену висоту */
+        padding: 0 20px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        width: 100%;
+        color: #333;
+        box-sizing: border-box; /* Важливо для коректних розмірів */
+    }
+
+    .modern-input:focus {
+        background-color: white;
+        border-color: var(--purina-red);
+        box-shadow: 0 0 0 4px rgba(226, 35, 26, 0.1);
+        outline: none;
+    }
+
+    .btn-add-modern {
+        background-color: var(--purina-dark);
+        color: white;
+        border: none;
+        border-radius: var(--radius-std);
+        height: var(--height-std);
+        width: 100%;
+        font-weight: 800;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .btn-add-modern:hover {
+        background-color: var(--purina-red);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(226, 35, 26, 0.3);
+    }
+
+    /* --- СПИСОК ЗАДАЧ --- */
+    .task-list-container {
+        padding: 24px;
+        background-color: #ffffff;
+        max-height: 500px; /* Трохи збільшив висоту списку */
+        overflow-y: auto;
+    }
+
+    .task-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Розподіл тексту і кнопок */
+        padding: 18px 20px; /* Трохи більше відступів всередині */
+        margin-bottom: 16px;
+        background: white;
+        border: 1px solid #eee;
+        border-radius: var(--radius-std);
+        transition: all 0.2s;
+        border-left: 5px solid #e0e0e0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    .task-card:hover {
+        transform: translateX(3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #e0e0e0;
+    }
+
+    .status-todo { border-left-color: var(--purina-red); }
+    .status-done { 
+        border-left-color: #28a745; 
+        background-color: #f8f9fa;
+        opacity: 0.8;
+    }
+    .status-done .task-title { text-decoration: line-through; color: #aaa; }
+
+    .task-content {
+        flex-grow: 1; 
+        padding-right: 20px;
+        min-width: 0; /* 🔥 Важливо: дозволяє тексту стискатись, не ламаючи верстку */
+    }
+
+    .task-title { 
+        font-size: 1rem; 
+        font-weight: 600; 
+        color: #333; 
+        line-height: 1.4;
+        word-wrap: break-word; /* Перенос довгих слів */
+    }
+    
+    .owner-pill {
+        background-color: #f0f2f5;
+        color: #666;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px; /* Відступ від заголовка */
+    }
+
+    /* 🔥 ВИПРАВЛЕНІ КНОПКИ ДІЙ (SVG) */
+    .task-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Відступ між кнопками */
+        flex-shrink: 0; /* 🔥 ЗАБОРОНЯЄ кнопки стискатись, фіксує їх розмір */
+    }
+
+    .action-btn {
+        width: 40px;  /* Трохи збільшив для зручності */
+        height: 40px;
+        border-radius: 50%;
+        display: flex; /* Центрування SVG всередині */
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: none;
+        text-decoration: none !important;
+        flex-shrink: 0; /* Фіксація розміру самої кнопки */
+    }
+
+    .action-btn svg {
+        pointer-events: none;
+        display: block; /* Прибирає зайві відступи SVG */
+    }
+
+    /* Кнопка "Виконано/Статус" */
+    .btn-check { background-color: #e8f5e9; color: #2e7d32; }
+    /* Кнопка "Видалити" */
+    .btn-trash { background-color: #ffebee; color: #c62828; }
+
+    /* HOVER */
+    .action-btn:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .btn-check:hover { background-color: #c8e6c9; color: #1b5e20; }
+    .btn-trash:hover { background-color: #ffcdd2; color: #b71c1c; }
+
+    /* --- ТАБЛИЦЯ ІСТОРІЇ --- */
     .table-history thead th {
         background-color: var(--purina-dark);
         color: white;
         border: none;
-        border-bottom: 3px solid var(--purina-red);
-        text-align: center;
-        vertical-align: middle;
+        padding: 16px;
+        font-size: 0.9rem;
+        font-weight: 700;
     }
-    
     .table-history td {
+        padding: 16px;
         vertical-align: middle;
-        text-align: center;
+        font-size: 0.95rem;
+        border-top: 1px solid #f0f0f0;
     }
-
-    /* Кольори для тексту */
     .text-critical { color: #D32F2F; font-weight: 800; }
-    .text-serious { color: #E65100; font-weight: 700; }
-    .text-moderate { color: #F57F17; font-weight: 600; }
-    .text-dim { color: #ccc; }
 </style>
 
 <div class="container mt-4 mb-5">
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h5 class="text-muted mb-1 text-uppercase" style="font-size: 0.9rem;">Project History Analysis</h5>
-            <h2 style="font-weight: 800; color: var(--purina-dark); margin: 0;">
+            <h5 class="text-muted mb-1 text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px; font-weight: 700;">Project Analytics</h5>
+            <h2 style="font-weight: 800; color: var(--purina-dark); margin: 0; font-size: 1.8rem;">
                 <%= project.custom_title || 'Project Details' %>
             </h2>
-            <a href="<%= project.project_url %>" target="_blank" style="color: var(--purina-red); text-decoration: underline;">
-                <%= project.project_url %> <i class="fas fa-external-link-alt small"></i>
+            <a href="<%= project.project_url %>" target="_blank" style="color: var(--purina-red); font-weight: 600; font-size: 0.95rem;">
+                <%= project.project_url %> <i class="fas fa-external-link-alt small ml-1"></i>
             </a>
         </div>
-        <a href="/" class="btn btn-back shadow-sm">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </a>
+        
+        <div class="header-actions">
+            <button onclick="copyLink()" class="btn-header-action btn-share shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-2" viewBox="0 0 16 16">
+                  <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
+                  <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/>
+                </svg>
+                Share
+            </button>
+            <a href="/" class="btn-header-action btn-back shadow-sm">
+                Dashboard
+            </a>
+        </div>
     </div>
 
-    <div class="card card-purina">
-        <div class="card-header">
-            Performance Trend (Score vs Critical Issues)
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="card card-purina h-100">
+                <div class="card-header">
+                    <span class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="mr-2" viewBox="0 0 16 16" style="color: var(--purina-red);">
+                          <path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-9a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v9h1V2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v9h1V2zm-3 11V3H6v10h2zM3 3v10H2V3h1zm10 0v10h-1V3h1z"/>
+                        </svg>
+                        Performance Trend
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="historyChart" style="max-height: 380px; width: 100%;"></canvas>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <canvas id="historyChart" style="max-height: 350px; width: 100%;"></canvas>
+
+        <div class="col-lg-5 mb-4">
+            <div class="card card-purina h-100">
+                <div class="card-header">
+                    <span class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="mr-2" viewBox="0 0 16 16" style="color: var(--purina-red);">
+                          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                        Action Items
+                    </span>
+                    <span class="badge badge-dark" style="background: var(--purina-dark); border-radius: 8px; padding: 6px 10px;"><%= tasks ? tasks.length : 0 %></span>
+                </div>
+                
+                <div class="modern-form-wrapper">
+                    <form action="/project/<%= project.id %>/add-task" method="POST">
+                        <div class="form-spacer">
+                            <input type="text" name="task" class="modern-input" placeholder="What needs to be fixed?" required autocomplete="off">
+                        </div>
+                        <div class="form-spacer">
+                            <input type="text" name="owner" class="modern-input" list="owners-list" placeholder="Owner (Who?)" value="<%= project.contact_person || '' %>">
+                            <datalist id="owners-list">
+                                <% if (locals.owners) { %>
+                                    <% owners.forEach(ownerName => { %>
+                                        <option value="<%= ownerName %>">
+                                    <% }) %>
+                                <% } %>
+                                <option value="Dev Team">
+                                <option value="QA">
+                                <option value="Designer">
+                            </datalist>
+                        </div>
+                        <button class="btn-add-modern" type="submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                            </svg>
+                            ADD TASK
+                        </button>
+                    </form>
+                </div>
+
+                <div class="task-list-container">
+                    <% if (tasks && tasks.length > 0) { %>
+                        <% tasks.forEach(task => { %>
+                            <div class="task-card <%= task.status === 'Done' ? 'status-done' : 'status-todo' %>">
+                                
+                                <div class="task-content">
+                                    <div class="task-title"><%= task.task %></div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="owner-pill">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="mr-1" viewBox="0 0 16 16">
+                                              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                                            </svg>
+                                            <%= task.owner || 'Team' %>
+                                        </span>
+                                        <small class="text-muted ml-3" style="font-size: 0.75rem; font-weight: 500; margin-top: 8px;">
+                                            <%= new Date(task.created_at).toLocaleDateString() %>
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="task-actions">
+                                    <a href="/project/<%= project.id %>/toggle-task/<%= task.id %>" class="action-btn btn-check" title="Toggle Status">
+                                        <% if (task.status === 'Done') { %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                            </svg>
+                                        <% } else { %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                            </svg>
+                                        <% } %>
+                                    </a>
+                                    
+                                    <a href="/project/<%= project.id %>/delete-task/<%= task.id %>" class="action-btn btn-trash" onclick="return confirm('Delete this task?')" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                          <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="text-center py-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#eee" class="mb-3" viewBox="0 0 16 16">
+                              <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                              <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                            </svg>
+                            <p class="text-muted mb-0" style="font-weight: 500;">No active tasks</p>
+                            <p class="small text-muted">Add a new item using the form above.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card card-purina">
+    <div class="card card-purina mt-3">
         <div class="card-header">
-            Detailed Scan Logs
+            <span class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="mr-2" viewBox="0 0 16 16" style="color: var(--purina-red);">
+                  <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                </svg>
+                Scan History Log
+            </span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped mb-0 table-history">
                     <thead>
                         <tr>
-                            <th style="text-align: left; padding-left: 20px;">Scan Date</th>
+                            <th style="text-align: left; padding-left: 24px;">Scan Date</th>
                             <th>Score</th>
                             <th>Total Issues</th>
                             <th style="background-color: #fff0f0; color: #D32F2F;">Critical</th>
                             <th>Serious</th>
                             <th>Moderate</th>
-                            <th>Minor</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -121,54 +437,27 @@
                                     else if (scan.score < 90) scoreColor = '#FBC02D';
                                 %>
                                 <tr>
-                                    <td style="text-align: left; padding-left: 20px;">
+                                    <td style="text-align: left; padding-left: 24px;">
                                         <strong><%= scan.scan_date %></strong><br>
-                                        <small class="text-muted">Checked at: <%= new Date(scan.checked_at).toLocaleTimeString() %></small>
+                                        <small class="text-muted"><%= new Date(scan.checked_at).toLocaleTimeString() %></small>
                                     </td>
-
                                     <td>
-                                        <span class="badge" style="background-color: <%= scoreColor %>; color: white; font-size: 1em; width: 60px; padding: 8px;">
+                                        <span class="badge shadow-sm" style="background-color: <%= scoreColor %>; color: white; padding: 8px 12px; font-size: 0.95rem;">
                                             <%= scan.score %>%
                                         </span>
                                     </td>
-
-                                    <td style="font-weight: bold;"><%= scan.total_issues || 0 %></td>
-                                    
+                                    <td style="font-weight: bold; color: #555; font-size: 1rem;"><%= scan.total_issues || 0 %></td>
                                     <td style="background-color: #fff5f5;">
-                                        <% if (scan.critical_issues > 0) { %>
-                                            <span class="text-critical"><%= scan.critical_issues %></span>
-                                        <% } else { %>
-                                            <span class="text-dim">0</span>
-                                        <% } %>
+                                        <span class="<%= scan.critical_issues > 0 ? 'text-critical' : 'text-muted' %>" style="font-size: 1rem;">
+                                            <%= scan.critical_issues || 0 %>
+                                        </span>
                                     </td>
-                                    
-                                    <td>
-                                        <% if (scan.serious_issues > 0) { %>
-                                            <span class="text-serious"><%= scan.serious_issues %></span>
-                                        <% } else { %>
-                                            <span class="text-dim">0</span>
-                                        <% } %>
-                                    </td>
-                                    
-                                    <td>
-                                        <% if (scan.moderate_issues > 0) { %>
-                                            <span class="text-moderate"><%= scan.moderate_issues %></span>
-                                        <% } else { %>
-                                            <span class="text-dim">0</span>
-                                        <% } %>
-                                    </td>
-
-                                    <td class="text-muted">
-                                        <%= scan.minor_issues || 0 %>
-                                    </td>
+                                    <td><%= scan.serious_issues || 0 %></td>
+                                    <td><%= scan.moderate_issues || 0 %></td>
                                 </tr>
                             <% }) %>
                         <% } else { %>
-                            <tr>
-                                <td colspan="7" class="text-center py-5">
-                                    <h4 class="text-muted">No scan history available yet.</h4>
-                                </td>
-                            </tr>
+                            <tr><td colspan="6" class="text-center py-5">No history available yet.</td></tr>
                         <% } %>
                     </tbody>
                 </table>
@@ -178,18 +467,23 @@
 </div>
 
 <script>
-    // Отримуємо дані з EJS
-    const rawData = <%- JSON.stringify(history) %>;
-    // Реверсуємо, щоб графік йшов зліва направо (від старих до нових)
+    function copyLink() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        });
+    }
+
+    const rawData = <%- JSON.stringify(history || []) %>;
     const chartData = [...rawData].reverse();
 
     const labels = chartData.map(h => h.scan_date);
-    const scores = chartData.map(h => h.score);
-    // Перетворюємо стрічку "1.6K" або "283" в число, якщо треба, але в нас вже нормалізовано в базі
-    const criticals = chartData.map(h => {
-        let val = h.critical_issues || 0;
-        return parseInt(val);
-    });
+    const scores = chartData.map(h => h.score); 
+    const targetLine = chartData.map(() => 90);
+
+    const criticals = chartData.map(h => parseInt(h.critical_issues || 0));
+    const serious = chartData.map(h => parseInt(h.serious_issues || 0));
+    const moderate = chartData.map(h => parseInt(h.moderate_issues || 0));
 
     const ctx = document.getElementById('historyChart').getContext('2d');
     
@@ -199,58 +493,108 @@
             labels: labels,
             datasets: [
                 {
+                    label: 'Target Goal (90%)',
+                    data: targetLine,
+                    borderColor: '#198754', 
+                    borderWidth: 2,
+                    borderDash: [10, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    yAxisID: 'y',
+                    order: 0
+                },
+                {
                     label: 'Accessibility Score (%)',
                     data: scores,
-                    borderColor: '#28a745', // Green
+                    borderColor: '#28a745',
                     backgroundColor: 'rgba(40, 167, 69, 0.1)',
                     yAxisID: 'y',
-                    tension: 0.3,
                     fill: true,
-                    pointRadius: 4
+                    tension: 0.3,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    borderWidth: 3,
+                    order: 1
                 },
                 {
                     label: 'Critical Issues',
                     data: criticals,
-                    borderColor: '#E2231A', // Purina Red
+                    borderColor: '#E2231A',
                     backgroundColor: 'transparent',
-                    borderDash: [5, 5],
+                    borderDash: [3, 3],
                     yAxisID: 'y1',
                     tension: 0.1,
                     pointStyle: 'rectRot',
-                    pointRadius: 5
+                    pointRadius: 6,
+                    borderWidth: 2,
+                    order: 2
+                },
+                {
+                    label: 'Serious Issues',
+                    data: serious,
+                    borderColor: '#E65100',
+                    backgroundColor: 'transparent',
+                    yAxisID: 'y1',
+                    tension: 0.1,
+                    pointStyle: 'triangle',
+                    pointRadius: 5,
+                    borderWidth: 2,
+                    hidden: true 
+                },
+                {
+                    label: 'Moderate Issues',
+                    data: moderate,
+                    borderColor: '#FFC107',
+                    backgroundColor: 'transparent',
+                    yAxisID: 'y1',
+                    tension: 0.1,
+                    pointStyle: 'circle',
+                    pointRadius: 5,
+                    borderWidth: 2,
+                    hidden: true
                 }
             ]
         },
         options: {
             responsive: true,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: { 
-                    backgroundColor: 'rgba(28, 28, 28, 0.9)',
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { 
+                    position: 'top',
+                    labels: { 
+                        font: { size: 12, weight: 'bold' },
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(28, 28, 28, 0.95)',
                     titleFont: { size: 14 },
-                    bodyFont: { size: 13 }
+                    bodyFont: { size: 13 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true
                 }
             },
             scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    min: 0,
-                    max: 100,
-                    title: { display: true, text: 'Score (%)' }
+                y: { 
+                    min: 0, 
+                    max: 100, 
+                    position: 'left', 
+                    title: {display: true, text: 'Score (%)', font: {weight: 'bold'}},
+                    grid: { color: '#f0f0f0' },
+                    ticks: { stepSize: 5 }
                 },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: { display: true, text: 'Critical Issues Count' },
-                    grid: { drawOnChartArea: false },
-                    beginAtZero: true
+                y1: { 
+                    position: 'right', 
+                    beginAtZero: true, 
+                    grid: { drawOnChartArea: false }, 
+                    title: {display: true, text: 'Issues Count', font: {weight: 'bold'}},
+                    ticks: { precision: 0 }
+                },
+                x: {
+                    grid: { display: false }
                 }
             }
         }

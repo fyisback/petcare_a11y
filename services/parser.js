@@ -1,14 +1,14 @@
-// services/parser.js
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
 const db = require('./db');
+const { scrapeProjectDetails } = require('./detailsScraper');
 
 let browserInstance = null;
 
 async function getBrowser() {
     if (browserInstance) return browserInstance;
     try {
-        console.log('Launching new browser instance...');
+        console.log('[Parser] Launching new browser instance...');
         browserInstance = await puppeteer.launch({
             headless: 'new',
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--no-zygote', '--single-process']
@@ -16,7 +16,7 @@ async function getBrowser() {
         browserInstance.on('disconnected', () => { browserInstance = null; });
         return browserInstance;
     } catch (error) {
-        console.error('Failed to launch browser:', error);
+        console.error('[Parser] Failed to launch browser:', error);
         throw error;
     }
 }
@@ -26,19 +26,18 @@ async function fetchData(url) {
     try {
         const browser = await getBrowser();
         page = await browser.newPage();
-        
-        // Маскуємось під людину
+        // Емулюємо реального користувача
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
-        console.log(`Navigating to ${url}...`);
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        console.log(`[Parser] Navigating to ${url}...`);
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         
-        // Чекаємо промальовки JS (6 сек)
+        // Чекаємо JS рендерингу
         await new Promise(r => setTimeout(r, 6000));
         
         return await page.content();
     } catch (error) {
-        console.error(`Error processing ${url}:`, error.message);
+        console.error(`[Parser] Error processing ${url}:`, error.message);
         if (error.message.includes('Session closed')) browserInstance = null;
         return null;
     } finally {
@@ -46,33 +45,46 @@ async function fetchData(url) {
     }
 }
 
-// Перетворює "1.6K" -> "1600", "N/A" -> "0"
+// 🔥 ВИПРАВЛЕНА ФУНКЦІЯ: Обробка 1.6K, 1,6 тис., 3.2M і т.д.
 function normalizeCount(rawText) {
     if (!rawText) return '0';
-    let text = rawText.trim().toUpperCase();
     
-    if (['-', '–', '—', 'N/A', ''].includes(text)) return '0';
+    // Переводимо в нижній регістр і прибираємо пробіли
+    let text = rawText.trim().toLowerCase();
+    
+    if (['-', '–', '—', 'n/a', '', 'nan'].includes(text)) return '0';
 
     let multiplier = 1;
-    if (text.endsWith('K')) { multiplier = 1000; text = text.replace('K', ''); } 
-    else if (text.endsWith('M')) { multiplier = 1000000; text = text.replace('M', ''); }
 
-    text = text.replace(/[^\d.]/g, ''); // Залишаємо тільки цифри і крапку
+    // Визначаємо множник
+    if (text.includes('k') || text.includes('тис')) {
+        multiplier = 1000;
+    } else if (text.includes('m') || text.includes('млн')) {
+        multiplier = 1000000;
+    }
+
+    // 1. Замінюємо кому на крапку (для дробових чисел: 1,6 -> 1.6)
+    text = text.replace(',', '.');
+
+    // 2. Видаляємо все, що не є цифрою або крапкою
+    text = text.replace(/[^\d.]/g, '');
+
+    // 3. Парсимо число
     const number = parseFloat(text);
     
     if (isNaN(number)) return '0';
+
+    // 4. Множимо і округлюємо
     return Math.floor(number * multiplier).toString();
 }
 
 function parseProjectDetails(mainHtml, url) {
     const errorResult = { success: false, score: 'N/A', scoreValue: 0, scanDate: 'Failed', details: { total: '0', critical: '0', serious: '0', moderate: '0', minor: '0' } };
-
     if (!mainHtml) return errorResult;
 
     try {
         const $ = cheerio.load(mainHtml);
         
-        // --- 1. Score ---
         let scoreElement = $('.c8e6500e7682');
         if (scoreElement.length === 0) {
             scoreElement = $('div, span, h1').filter((i, el) => /^\d+(\.\d+)?%$/.test($(el).text().trim())).eq(0);
@@ -80,19 +92,13 @@ function parseProjectDetails(mainHtml, url) {
         const scoreText = scoreElement.text().trim();
         const scanDate = $('#menu-trigger5').text().trim() || 'N/A';
 
-        // --- 2. Issues (Hybrid Search) ---
         const getCountById = (id) => {
-            // Спроба 1: шукаємо по aria-describedby (для лінків)
             let el = $(`[aria-describedby="${id}"]`);
-            
-            // Спроба 2: якщо не знайшли, шукаємо через батьківський li (для нулів)
+            // Фоллбек: шукаємо через батьківський li
             if (el.length === 0) {
                 el = $(`#${id}`).closest('li').find('.f5b9d169f9da');
             }
-
-            if (el.length) {
-                return normalizeCount(el.text().trim());
-            }
+            if (el.length) return normalizeCount(el.text().trim());
             return '0';
         };
 
@@ -102,7 +108,7 @@ function parseProjectDetails(mainHtml, url) {
         const moderate = getCountById('issue-count-moderate');
         const minor = getCountById('issue-count-minor');
 
-        console.log(`[PARSED] ${url} -> Score: ${scoreText}, Total: ${total}, Crit: ${critical}`);
+        console.log(`[Parser] Main Data -> Score: ${scoreText}, Total: ${total}, Crit: ${critical}`);
 
         return {
             success: !!scoreText,
@@ -111,9 +117,8 @@ function parseProjectDetails(mainHtml, url) {
             scanDate: scanDate,
             details: { total, critical, serious, moderate, minor }
         };
-
     } catch (e) {
-        console.error(`Parsing error for ${url}:`, e);
+        console.error(`[Parser] Error:`, e);
         return errorResult;
     }
 }
@@ -123,13 +128,41 @@ async function updateProjectScore(project) {
     const data = parseProjectDetails(html, project.project_url);
 
     if (data.success) {
-        console.log(`[DB] Saving project ${project.id} (Crit: ${data.details.critical}, Serious: ${data.details.serious})`);
-        
+        let issuesUrl = null;
+
+        // 1. Деталі помилок (через наш окремий скрапер)
+        try {
+            console.log(`[Parser] Fetching detailed issues for ${project.id}...`);
+            const result = await scrapeProjectDetails(project.project_url);
+            
+            const issueDetails = result.issues;
+            issuesUrl = result.url; 
+
+            const updateDetailsTx = db.transaction((issues) => {
+                db.prepare('DELETE FROM issue_details WHERE project_id = ?').run(project.id);
+                const insert = db.prepare(`
+                    INSERT INTO issue_details (project_id, description, severity, pages_count, issues_count, issue_link)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                `);
+                for (const issue of issues) {
+                    insert.run(project.id, issue.description, issue.severity, issue.pages_count, issue.issues_count, issue.issue_link);
+                }
+            });
+
+            if (issueDetails.length > 0) {
+                updateDetailsTx(issueDetails);
+                console.log(`[DB] Saved ${issueDetails.length} detailed issues.`);
+            }
+        } catch (detailErr) {
+            console.error(`[Parser] Details Error:`, detailErr.message);
+        }
+
+        // 2. Основна статистика (project_scores)
         try {
             db.prepare(`
                 INSERT INTO project_scores 
-                (project_id, score, scan_date, total_issues, critical_issues, serious_issues, moderate_issues, minor_issues) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (project_id, score, scan_date, total_issues, critical_issues, serious_issues, moderate_issues, minor_issues, issues_list_url) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 project.id, 
                 data.scoreValue, 
@@ -138,10 +171,11 @@ async function updateProjectScore(project) {
                 data.details.critical, 
                 data.details.serious, 
                 data.details.moderate, 
-                data.details.minor
+                data.details.minor,
+                issuesUrl 
             );
         } catch (dbErr) {
-            console.error(`[DB ERROR] Failed to insert score:`, dbErr);
+            console.error(`[DB ERROR]`, dbErr);
         }
     }
     return data;
