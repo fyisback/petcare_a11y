@@ -26,13 +26,11 @@ async function fetchData(url) {
     try {
         const browser = await getBrowser();
         page = await browser.newPage();
-        // Емулюємо реального користувача
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
         console.log(`[Parser] Navigating to ${url}...`);
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         
-        // Чекаємо JS рендерингу
         await new Promise(r => setTimeout(r, 6000));
         
         return await page.content();
@@ -45,36 +43,18 @@ async function fetchData(url) {
     }
 }
 
-// 🔥 ВИПРАВЛЕНА ФУНКЦІЯ: Обробка 1.6K, 1,6 тис., 3.2M і т.д.
 function normalizeCount(rawText) {
     if (!rawText) return '0';
-    
-    // Переводимо в нижній регістр і прибираємо пробіли
     let text = rawText.trim().toLowerCase();
-    
     if (['-', '–', '—', 'n/a', '', 'nan'].includes(text)) return '0';
 
     let multiplier = 1;
+    if (text.includes('k') || text.includes('тис')) multiplier = 1000;
+    else if (text.includes('m') || text.includes('млн')) multiplier = 1000000;
 
-    // Визначаємо множник
-    if (text.includes('k') || text.includes('тис')) {
-        multiplier = 1000;
-    } else if (text.includes('m') || text.includes('млн')) {
-        multiplier = 1000000;
-    }
-
-    // 1. Замінюємо кому на крапку (для дробових чисел: 1,6 -> 1.6)
-    text = text.replace(',', '.');
-
-    // 2. Видаляємо все, що не є цифрою або крапкою
-    text = text.replace(/[^\d.]/g, '');
-
-    // 3. Парсимо число
+    text = text.replace(',', '.').replace(/[^\d.]/g, '');
     const number = parseFloat(text);
-    
     if (isNaN(number)) return '0';
-
-    // 4. Множимо і округлюємо
     return Math.floor(number * multiplier).toString();
 }
 
@@ -94,10 +74,7 @@ function parseProjectDetails(mainHtml, url) {
 
         const getCountById = (id) => {
             let el = $(`[aria-describedby="${id}"]`);
-            // Фоллбек: шукаємо через батьківський li
-            if (el.length === 0) {
-                el = $(`#${id}`).closest('li').find('.f5b9d169f9da');
-            }
+            if (el.length === 0) el = $(`#${id}`).closest('li').find('.f5b9d169f9da');
             if (el.length) return normalizeCount(el.text().trim());
             return '0';
         };
@@ -108,7 +85,7 @@ function parseProjectDetails(mainHtml, url) {
         const moderate = getCountById('issue-count-moderate');
         const minor = getCountById('issue-count-minor');
 
-        console.log(`[Parser] Main Data -> Score: ${scoreText}, Total: ${total}, Crit: ${critical}`);
+        console.log(`[Parser] Main Data -> Score: ${scoreText}, Total: ${total}, Date: ${scanDate}`);
 
         return {
             success: !!scoreText,
@@ -124,13 +101,45 @@ function parseProjectDetails(mainHtml, url) {
 }
 
 async function updateProjectScore(project) {
+    // 1. Спочатку парсимо "легку" сторінку з основною інфою
     const html = await fetchData(project.project_url);
     const data = parseProjectDetails(html, project.project_url);
 
     if (data.success) {
+        // 2. 🔥 ПЕРЕВІРКА: Чи змінились дані?
+        // Отримуємо останній запис для цього проекту
+        const lastRecord = db.prepare(`
+            SELECT score, scan_date, total_issues 
+            FROM project_scores 
+            WHERE project_id = ? 
+            ORDER BY id DESC LIMIT 1
+        `).get(project.id);
+
+        // Логіка порівняння: 
+        // Якщо дата, скор І загальна кількість помилок збігаються з останнім записом - нічого не робимо.
+        const isUpToDate = lastRecord && 
+                           lastRecord.scan_date === data.scanDate &&
+                           lastRecord.score === data.scoreValue &&
+                           String(lastRecord.total_issues) === String(data.details.total);
+
+        if (isUpToDate) {
+            console.log(`[Parser] 🟢 Project ID ${project.id} is up to date (Scan: ${data.scanDate}). Skipping details scan.`);
+            
+            // Оновлюємо поле checked_at, щоб знати, що ми перевіряли, навіть якщо нових даних немає
+            db.prepare(`
+                UPDATE project_scores 
+                SET checked_at = CURRENT_TIMESTAMP 
+                WHERE id = (SELECT id FROM project_scores WHERE project_id = ? ORDER BY id DESC LIMIT 1)
+            `).run(project.id);
+
+            return data; // Виходимо, не запускаючи scrapeProjectDetails
+        }
+
+        console.log(`[Parser] 🔄 New scan detected! (Old: ${lastRecord?.scan_date} -> New: ${data.scanDate}). Updating...`);
+
+        // 3. Якщо дані нові — запускаємо важкий скрапер і пишемо в БД
         let issuesUrl = null;
 
-        // 1. Деталі помилок (через наш окремий скрапер)
         try {
             console.log(`[Parser] Fetching detailed issues for ${project.id}...`);
             const result = await scrapeProjectDetails(project.project_url);
@@ -157,7 +166,7 @@ async function updateProjectScore(project) {
             console.error(`[Parser] Details Error:`, detailErr.message);
         }
 
-        // 2. Основна статистика (project_scores)
+        // 4. Зберігаємо нову історію в project_scores
         try {
             db.prepare(`
                 INSERT INTO project_scores 
@@ -174,6 +183,7 @@ async function updateProjectScore(project) {
                 data.details.minor,
                 issuesUrl 
             );
+            console.log(`[DB] New history record inserted.`);
         } catch (dbErr) {
             console.error(`[DB ERROR]`, dbErr);
         }
