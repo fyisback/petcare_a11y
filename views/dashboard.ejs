@@ -321,17 +321,17 @@
                                         <div class="score-badge" style="background-color: <%= scoreColor %>; color: <%= textColor %>;">
                                             <%= project.score %>
                                         </div>
-                                        <% if (project.hasHistory) { %>
-                                            <div style="font-size: 0.7rem; margin-top: 2px;">
-                                                <% if (project.scoreTrend > 0) { %>
-                                                    <span class="trend-up">▲ +<%= project.scoreTrend %></span>
-                                                <% } else if (project.scoreTrend < 0) { %>
-                                                    <span class="trend-down">▼ <%= project.scoreTrend %></span>
-                                                <% } else { %>
-                                                    <span class="trend-neutral">-</span>
-                                                <% } %>
-                                            </div>
-                                        <% } %>
+                                      <% if (project.hasHistory) { %>
+    <div style="font-size: 0.7rem; margin-top: 2px;">
+        <% if (project.scoreTrend > 0) { %>
+            <span class="trend-up">▲ +<%= parseFloat(project.scoreTrend).toFixed(2) %></span>
+        <% } else if (project.scoreTrend < 0) { %>
+            <span class="trend-down">▼ <%= parseFloat(project.scoreTrend).toFixed(2) %></span>
+        <% } else { %>
+            <span class="trend-neutral">-</span>
+        <% } %>
+    </div>
+<% } %>
                                     </td>
 
                                     <td style="text-align: center; font-weight: bold; color: #555;">
