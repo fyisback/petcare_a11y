@@ -52,6 +52,23 @@ function initializeDatabase() {
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
       )
     `);
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_pages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_issues (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        page_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        severity TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (page_id) REFERENCES audit_pages(id) ON DELETE CASCADE
+    );
+`);
 
     // 5. 🔥 МІГРАЦІЯ: Додаємо колонки (включно з issues_list_url)
     const newColumns = [
