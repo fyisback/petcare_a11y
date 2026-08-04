@@ -4,7 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= pageTitle %></title>
-    <link rel="stylesheet" href="public/css/style.css">
+<style>
+/* =========================================
+   Audits Page Styles 
+   ========================================= */
+
+/* Upper Controls (Search & Add Page) */
+.audit-controls {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: flex-end;
+}
+.audit-controls form {
+    margin: 0;
+    flex: 1;
+    min-width: 300px;
+}
+.audit-controls label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #1a1a1a;
+}
+.audit-controls .form-group {
+    display: flex;
+    gap: 0.5rem;
+}
+.audit-controls input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+}
+
+/* Page Section Container */
+.audit-page-section {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 2.5rem;
+}
+.audit-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f4f5f7;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+.audit-page-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.5rem;
+}
+
+/* Add Issue Form */
+.add-issue-form {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+.add-issue-form input[type="text"],
+.add-issue-form textarea,
+.add-issue-form select {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    box-sizing: border-box;
+    width: 100%;
+}
+.add-issue-form textarea {
+    resize: vertical;
+    min-height: 98px; /* Aligns with inputs on the right */
+}
+.input-group-main {
+    flex: 2;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.input-group-side {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.file-upload-wrapper {
+    background: #ffffff;
+    border: 1px dashed #ccc;
+    padding: 0.4rem;
+    border-radius: 4px;
+}
+
+/* Issues Grid & Cards */
+.issues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.issue-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    overflow: hidden;
+}
+.issue-card:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+/* Image inside Card */
+.issue-image-container {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.issue-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Заповнює блок, обрізаючи зайве */
+    transition: transform 0.3s ease;
+}
+.issue-image-container:hover img {
+    transform: scale(1.05); /* Легкий зум при наведенні */
+}
+
+/* Card Content */
+.issue-card-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.issue-card h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.1rem;
+    color: #1a1a1a;
+}
+.issue-card-desc {
+    font-size: 0.95rem;
+    color: #5a6268;
+    flex-grow: 1;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
+}
+.issue-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #e9ecef;
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+/* Badges (Pill Shape) */
+.severity-badge, .score-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white;
+}
+.severity-badge {
+    align-self: flex-start;
+    margin-bottom: 1rem;
+}
+.score-badge {
+    font-size: 1rem;
+    padding: 0.4rem 1rem;
+}
+.severity-Critical { background-color: #dc3545; } 
+.severity-High { background-color: #fd7e14; } 
+.severity-Medium { background-color: #ffc107; color: #1a1a1a; } 
+.severity-Low { background-color: #17a2b8; }
+</style>
 </head>
 <body>
     <header>
