@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header>
+        <h1>Project Dashboard</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/admin">Admin</a></li>
+                <li><a href="/weekly">Weekly Hub</a></li>
+                <li><a href="/audits">Audits</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Manual Audits & Issues</h2>
+        
+        <!-- Верхня панель: Пошук і Створення сторінки -->
+        <div class="forms-wrapper" style="align-items: center;">
+            <form action="/audits" method="GET" class="admin-form" style="flex: 2; margin-bottom: 0;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="search" placeholder="Search issues by title..." value="<%= searchQuery %>" style="flex: 1;">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <% if (searchQuery) { %>
+                        <a href="/audits" class="btn btn-secondary" style="line-height: 2;">Clear</a>
+                    <% } %>
+                </div>
+            </form>
+
+            <form action="/audits/pages/add" method="POST" class="admin-form" style="flex: 1; margin-bottom: 0;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="name" placeholder="New Page Name (e.g. Home, Checkout)" required style="flex: 1;">
+                    <button type="submit" class="btn btn-primary">Add Page</button>
+                </div>
+            </form>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 2rem 0;">
+
+        <!-- Вивід згрупованих сторінок та ішшюсів -->
+        <% if (auditData.length === 0) { %>
+            <div class="message">No pages or issues found.</div>
+        <% } else { %>
+            <% auditData.forEach(page => { %>
+                <div class="audit-page-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>
+                            <%= page.name %> 
+                            <span class="score-badge" style="background-color: <%= page.score === 100 ? '#28a745' : page.score >= 60 ? '#ffc107' : page.score >= 40 ? '#fd7e14' : '#dc3545' %>;">
+                                <%= page.score %>%
+                            </span>
+                        </h3>
+                        <form action="/audits/pages/<%= page.id %>/delete" method="POST" onsubmit="return confirm('Delete this page and all its issues?');">
+                            <button type="submit" class="btn btn-danger">Delete Page</button>
+                        </form>
+                    </div>
+
+                    <!-- Форма додавання нового ішшю до цієї сторінки -->
+                    <form action="/audits/pages/<%= page.id %>/issues/add" method="POST" style="margin-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" name="title" placeholder="Issue Title" required style="flex: 1; min-width: 200px; padding: 0.5rem;">
+                        <input type="text" name="description" placeholder="Description (Optional)" style="flex: 2; min-width: 250px; padding: 0.5rem;">
+                        <select name="severity" required style="padding: 0.5rem;">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                        <button type="submit" class="btn btn-secondary">Add Issue</button>
+                    </form>
+
+                    <!-- Картки ішшюсів -->
+                    <div class="issues-grid">
+                        <% if (page.issues && page.issues.length > 0) { %>
+                            <% page.issues.forEach(issue => { %>
+                                <div class="issue-card">
+                                    <span class="severity-badge severity-<%= issue.severity %>"><%= issue.severity %></span>
+                                    <h4><%= issue.title %></h4>
+                                    <p style="font-size: 0.9rem; color: #555; flex-grow: 1;"><%= issue.description || 'No description provided.' %></p>
+                                    
+                                    <form action="/audits/issues/<%= issue.id %>/delete" method="POST" style="margin-top: 1rem;">
+                                        <button type="submit" class="btn" style="background: transparent; color: #dc3545; padding: 0; font-size: 0.9rem;">Delete</button>
+                                    </form>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <p style="color: #6c757d; margin-top: 1rem;">No issues recorded for this page.</p>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </main>
+</body>
+</html>
