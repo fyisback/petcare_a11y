@@ -1,317 +1,206 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= pageTitle %></title>
-<style>
-/* =========================================
-   Audits Page Styles 
-   ========================================= */
+<%- include('partials/header') %>
 
-/* Upper Controls (Search & Add Page) */
-.audit-controls {
-    background-color: #ffffff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    margin-bottom: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    align-items: flex-end;
-}
-.audit-controls form {
-    margin: 0;
-    flex: 1;
-    min-width: 300px;
-}
-.audit-controls label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    color: #1a1a1a;
-}
-.audit-controls .form-group {
-    display: flex;
-    gap: 0.5rem;
-}
-.audit-controls input {
-    flex: 1;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: inherit;
-}
-
-/* Page Section Container */
-.audit-page-section {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    margin-bottom: 2.5rem;
-}
-.audit-page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #f4f5f7;
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
-}
-.audit-page-header h3 {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 1.5rem;
-}
-
-/* Add Issue Form */
-.add-issue-form {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-    margin-bottom: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    align-items: flex-start;
-}
-.add-issue-form input[type="text"],
-.add-issue-form textarea,
-.add-issue-form select {
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: inherit;
-    box-sizing: border-box;
-    width: 100%;
-}
-.add-issue-form textarea {
-    resize: vertical;
-    min-height: 98px; /* Aligns with inputs on the right */
-}
-.input-group-main {
-    flex: 2;
-    min-width: 250px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-.input-group-side {
-    flex: 1;
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-.file-upload-wrapper {
-    background: #ffffff;
-    border: 1px dashed #ccc;
-    padding: 0.4rem;
-    border-radius: 4px;
-}
-
-/* Issues Grid & Cards */
-.issues-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-.issue-card {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-    overflow: hidden;
-}
-.issue-card:hover {
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
-}
-
-/* Image inside Card */
-.issue-image-container {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    height: 180px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-.issue-image-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Заповнює блок, обрізаючи зайве */
-    transition: transform 0.3s ease;
-}
-.issue-image-container:hover img {
-    transform: scale(1.05); /* Легкий зум при наведенні */
-}
-
-/* Card Content */
-.issue-card-content {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-.issue-card h4 {
-    margin: 0 0 0.75rem 0;
-    font-size: 1.1rem;
-    color: #1a1a1a;
-}
-.issue-card-desc {
-    font-size: 0.95rem;
-    color: #5a6268;
-    flex-grow: 1;
-    margin: 0 0 1.5rem 0;
-    line-height: 1.5;
-}
-.issue-card-actions {
-    display: flex;
-    justify-content: flex-end;
-    border-top: 1px solid #e9ecef;
-    padding-top: 1rem;
-    margin-top: auto;
-}
-
-/* Badges (Pill Shape) */
-.severity-badge, .score-badge {
-    display: inline-block;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: white;
-}
-.severity-badge {
-    align-self: flex-start;
-    margin-bottom: 1rem;
-}
-.score-badge {
-    font-size: 1rem;
-    padding: 0.4rem 1rem;
-}
-.severity-Critical { background-color: #dc3545; } 
-.severity-High { background-color: #fd7e14; } 
-.severity-Medium { background-color: #ffc107; color: #1a1a1a; } 
-.severity-Low { background-color: #17a2b8; }
-</style>
+<!-- Підключення TinyMCE (Rich Text Editor) -->
 <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-    <script>
-        tinymce.init({
-            selector: 'textarea[name="description"]', // застосувати до нашого поля
-            menubar: false,
-            plugins: 'lists link code',
-            toolbar: 'bold italic | bullist numlist | link | removeformat',
-            height: 200,
-            skin: 'oxide',
-            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }'
-        });
-    </script>
-</head>
-<body>
-    <header>
-        <h1>Project Dashboard</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Dashboard</a></li>
-                <li><a href="/admin">Admin</a></li>
-                <li><a href="/weekly">Weekly Hub</a></li>
-                <li><a href="/audits">Audits</a></li>
-            </ul>
-        </nav>
-    </header>
+<script>
+    tinymce.init({
+        selector: 'textarea[name="description"]',
+        menubar: false,
+        plugins: 'lists link code',
+        toolbar: 'bold italic | bullist numlist | link | removeformat',
+        height: 200,
+        skin: 'oxide',
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }'
+    });
+</script>
 
-    <main>
-        <h2>Manual Audits & Issues</h2>
-        
-        <!-- Верхня панель: Пошук і Створення сторінки -->
-        <div class="forms-wrapper" style="align-items: center;">
-            <form action="/audits" method="GET" class="admin-form" style="flex: 2; margin-bottom: 0;">
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" name="search" placeholder="Search issues by title..." value="<%= searchQuery %>" style="flex: 1;">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                    <% if (searchQuery) { %>
-                        <a href="/audits" class="btn btn-secondary" style="line-height: 2;">Clear</a>
-                    <% } %>
-                </div>
-            </form>
+<style>
+    /* Стилі сторінки Audits */
+    .audit-controls {
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        align-items: flex-end;
+    }
+    .audit-controls form { margin: 0; flex: 1; min-width: 300px; }
+    .audit-controls label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #1a1a1a; }
+    .audit-controls .form-group { display: flex; gap: 0.5rem; }
+    .audit-controls input { flex: 1; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+    
+    .audit-page-section {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 2.5rem;
+    }
+    .audit-page-header {
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 2px solid #f4f5f7; padding-bottom: 1rem; margin-bottom: 1.5rem;
+    }
+    .audit-page-header h3 { margin: 0; display: flex; align-items: center; gap: 1rem; font-size: 1.5rem; }
 
-            <form action="/audits/pages/add" method="POST" class="admin-form" style="flex: 1; margin-bottom: 0;">
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" name="name" placeholder="New Page Name (e.g. Home, Checkout)" required style="flex: 1;">
-                    <button type="submit" class="btn btn-primary">Add Page</button>
-                </div>
-            </form>
+    /* Форма додавання ішшю */
+    .add-issue-form {
+        background-color: #f8f9fa; padding: 1.5rem; border-radius: 8px;
+        border: 1px solid #e9ecef; margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start;
+    }
+    .add-issue-form input[type="text"], .add-issue-form select {
+        padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; width: 100%; box-sizing: border-box;
+    }
+    .input-group-main { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 0.75rem; }
+    .input-group-side { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 0.75rem; }
+    .file-upload-wrapper { background: #ffffff; border: 1px dashed #ccc; padding: 0.4rem; border-radius: 4px; }
+
+    /* Картки */
+    .issues-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .issue-card {
+        border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff;
+        display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s ease, transform 0.2s ease; overflow: hidden;
+    }
+    .issue-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .issue-image-container {
+        background-color: #f8f9fa; border-bottom: 1px solid #e9ecef; height: 180px;
+        display: flex; justify-content: center; align-items: center; overflow: hidden;
+    }
+    .issue-image-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+    .issue-image-container:hover img { transform: scale(1.05); }
+    
+    .issue-card-content { padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }
+    .issue-card h4 { margin: 0 0 0.75rem 0; font-size: 1.1rem; color: #1a1a1a; }
+    .issue-card-desc { font-size: 0.95rem; color: #5a6268; flex-grow: 1; margin: 0 0 1.5rem 0; line-height: 1.5; }
+    
+    /* Беджі */
+    .severity-badge, .score-badge {
+        display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: white;
+    }
+    .severity-badge { align-self: flex-start; margin-bottom: 1rem; }
+    .score-badge { font-size: 1rem; padding: 0.4rem 1rem; }
+    .severity-Critical { background-color: #dc3545; } 
+    .severity-High { background-color: #fd7e14; } 
+    .severity-Medium { background-color: #ffc107; color: #1a1a1a; } 
+    .severity-Low { background-color: #17a2b8; }
+</style>
+
+<div class="container-fluid mt-4 mb-5 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid #e0e0e0;">
+        <h1 class="h3 mb-0" style="font-weight: 800; color: #1C1C1C;">Manual Audits & Issues</h1>
+    </div>
+
+    <!-- Верхня панель: Пошук і Створення сторінки -->
+    <div class="audit-controls">
+        <form action="/audits" method="GET">
+            <label>Search Issues</label>
+            <div class="form-group">
+                <input type="text" name="search" placeholder="Search by title..." value="<%= locals.searchQuery || '' %>">
+                <button type="submit" class="btn btn-primary" style="background-color: #007bff; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold; cursor: pointer;">Search</button>
+                <% if (locals.searchQuery) { %>
+                    <a href="/audits" class="btn btn-secondary" style="background-color: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold; text-decoration: none; display: flex; align-items: center;">Clear</a>
+                <% } %>
+            </div>
+        </form>
+
+        <form action="/audits/pages/add" method="POST">
+            <label>Add New Page</label>
+            <div class="form-group">
+                <input type="text" name="name" placeholder="e.g. Homepage, Checkout" required>
+                <button type="submit" class="btn btn-secondary" style="background-color: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold; cursor: pointer;">Create Page</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Вивід згрупованих сторінок та ішшюсів -->
+    <% if (!auditData || auditData.length === 0) { %>
+        <div class="message" style="background-color: #fff; border: 1px solid #ddd; padding: 2rem; text-align: center; border-radius: 8px; color: #6c757d;">
+            <strong>No pages or issues found.</strong><br> Start by adding a new page above.
         </div>
+    <% } else { %>
+        <% auditData.forEach(page => { %>
+            <div class="audit-page-section">
+                <div class="audit-page-header">
+                    <h3>
+                        <%= page.name %> 
+                        <span class="score-badge" style="background-color: <%= page.score === 100 ? '#28a745' : page.score >= 60 ? '#ffc107' : page.score >= 40 ? '#fd7e14' : '#dc3545' %>; <%= page.score >= 60 && page.score < 100 ? 'color: #1a1a1a;' : '' %>">
+                            Score: <%= page.score %>%
+                        </span>
+                    </h3>
+                    <form action="/audits/pages/<%= page.id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this page and ALL its issues?');" style="margin: 0;">
+                        <button type="submit" class="btn btn-danger" style="background-color: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer;">Delete Page</button>
+                    </form>
+                </div>
 
-        <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 2rem 0;">
-
-        <!-- Вивід згрупованих сторінок та ішшюсів -->
-        <% if (auditData.length === 0) { %>
-            <div class="message">No pages or issues found.</div>
-        <% } else { %>
-            <% auditData.forEach(page => { %>
-                <div class="audit-page-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3>
-                            <%= page.name %> 
-                            <span class="score-badge" style="background-color: <%= page.score === 100 ? '#28a745' : page.score >= 60 ? '#ffc107' : page.score >= 40 ? '#fd7e14' : '#dc3545' %>;">
-                                <%= page.score %>%
-                            </span>
-                        </h3>
-                        <form action="/audits/pages/<%= page.id %>/delete" method="POST" onsubmit="return confirm('Delete this page and all its issues?');">
-                            <button type="submit" class="btn btn-danger">Delete Page</button>
-                        </form>
+                <!-- Форма додавання нового ішшю. ВАЖЛИВО: enctype="multipart/form-data" -->
+                <form action="/audits/pages/<%= page.id %>/issues/add" method="POST" enctype="multipart/form-data" class="add-issue-form">
+                    <div class="input-group-main">
+                        <input type="text" name="title" placeholder="Issue Title (e.g. Missing Alt Text on Logo)" required>
+                        <!-- TinyMCE застосується сюди автоматично -->
+                        <textarea name="description" placeholder="Detailed description or steps to reproduce..."></textarea>
                     </div>
-
-                    <!-- Форма додавання нового ішшю до цієї сторінки -->
-                    <form action="/audits/pages/<%= page.id %>/issues/add" method="POST" style="margin-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" name="title" placeholder="Issue Title" required style="flex: 1; min-width: 200px; padding: 0.5rem;">
-                        <input type="text" name="description" placeholder="Description (Optional)" style="flex: 2; min-width: 250px; padding: 0.5rem;">
-                        <select name="severity" required style="padding: 0.5rem;">
+                    
+                    <div class="input-group-side">
+                        <select name="severity" required>
+                            <option value="" disabled selected>Select Severity</option>
                             <option value="Low">Low</option>
                             <option value="Medium">Medium</option>
                             <option value="High">High</option>
                             <option value="Critical">Critical</option>
                         </select>
-                        <button type="submit" class="btn btn-secondary">Add Issue</button>
-                    </form>
+                        
+                        <!-- ВАЖЛИВО: Поле для картинки -->
+                        <div class="file-upload-wrapper">
+                            <span style="font-size: 0.85rem; color: #6c757d; display: block; margin-bottom: 0.2rem;">Attach Screenshot:</span>
+                            <input type="file" name="image_file" accept="image/*" style="border: none; padding: 0; width: 100%;">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="background-color: #007bff; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: auto;">Add Issue</button>
+                    </div>
+                </form>
 
-                    <!-- Картки ішшюсів -->
-                    <div class="issues-grid">
-                        <% if (page.issues && page.issues.length > 0) { %>
-                            <% page.issues.forEach(issue => { %>
-                                <div class="issue-card">
+                <!-- Картки ішшюсів -->
+                <div class="issues-grid">
+                    <% if (page.issues && page.issues.length > 0) { %>
+                        <% page.issues.forEach(issue => { %>
+                            <div class="issue-card">
+                                <!-- Зображення на всю ширину зверху картки -->
+                                <% if (issue.image_url) { %>
+                                    <div class="issue-image-container">
+                                        <a href="<%= issue.image_url %>" target="_blank" title="Click to open full image" style="width: 100%; height: 100%;">
+                                            <img src="<%= issue.image_url %>" alt="Screenshot for <%= issue.title %>">
+                                        </a>
+                                    </div>
+                                <% } %>
+
+                                <div class="issue-card-content">
                                     <span class="severity-badge severity-<%= issue.severity %>"><%= issue.severity %></span>
                                     <h4><%= issue.title %></h4>
+                                    <!-- Вивід HTML від TinyMCE -->
                                     <div class="issue-card-desc">
-    <%- issue.description || 'No description provided.' %>
-</div>
+                                        <%- issue.description || 'No description provided.' %>
+                                    </div>
                                     
-                                    <form action="/audits/issues/<%= issue.id %>/delete" method="POST" style="margin-top: 1rem;">
-                                        <button type="submit" class="btn" style="background: transparent; color: #dc3545; padding: 0; font-size: 0.9rem;">Delete</button>
-                                    </form>
+                                    <div style="display: flex; justify-content: flex-end; border-top: 1px solid #e9ecef; padding-top: 1rem; margin-top: auto;">
+                                        <form action="/audits/issues/<%= issue.id %>/delete" method="POST" onsubmit="return confirm('Delete this issue?');" style="margin: 0;">
+                                            <button type="submit" style="background: transparent; border: none; color: #dc3545; font-weight: bold; font-size: 0.9rem; cursor: pointer; padding: 0;">Remove Issue</button>
+                                        </form>
+                                    </div>
                                 </div>
-                            <% }) %>
-                        <% } else { %>
-                            <p style="color: #6c757d; margin-top: 1rem;">No issues recorded for this page.</p>
-                        <% } %>
-                    </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; background: #f8f9fa; border: 1px dashed #ccc; border-radius: 8px; color: #6c757d;">
+                            No issues recorded for this page yet.
+                        </div>
+                    <% } %>
                 </div>
-            <% }) %>
-        <% } %>
-    </main>
-</body>
-</html>
+            </div>
+        <% }) %>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>
