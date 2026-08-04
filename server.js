@@ -36,6 +36,7 @@ app.use('/weekly', require('./routes/weekly'));
 
 // 4. 🔥 Детальна сторінка проекту (Історія + Задачі Action Items)
 app.use('/project', require('./routes/project'));
+app.use('/audits', require('./routes/audits'));
 
 // --- Обробка помилки 404 (Сторінка не знайдена) ---
 app.use((req, res) => {
