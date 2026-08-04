@@ -195,3 +195,52 @@ tbody tr:hover {
     background-color: #f8f9fa;
     margin-bottom: 2rem;
 }
+
+/* Audit Cards & Badges */
+.audit-page-section {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.score-badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-weight: bold;
+    color: white;
+    background: #1a1a1a;
+    margin-left: 10px;
+}
+.issues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+.issue-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+.issue-card h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+.severity-badge {
+    align-self: flex-start;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+.severity-Critical { background-color: #dc3545; } /* Dark Red */
+.severity-High { background-color: #fd7e14; } /* Orange */
+.severity-Medium { background-color: #ffc107; color: #1a1a1a; } /* Yellow */
+.severity-Low { background-color: #17a2b8; } /* Blue/Cyan */
