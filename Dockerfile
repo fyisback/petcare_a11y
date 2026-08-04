@@ -14,7 +14,7 @@ RUN rm -rf node_modules package-lock.json
 COPY package.json ./
 
 # 4. Ставимо залежності
-RUN npm install --omit=dev
+RUN npm install --omit=dev --legacy-peer-deps
 
 # 5. Лагодимо базу даних
 RUN npm rebuild better-sqlite3
